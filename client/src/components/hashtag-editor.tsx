@@ -66,6 +66,41 @@ export default function HashtagEditor({ content, onChange, placeholder }: Hashta
     },
   });
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const lines = content.substring(0, start).split('\n');
+      const currentLine = lines[lines.length - 1];
+      
+      // Check if current line is a bullet point or numbered list
+      const bulletMatch = currentLine.match(/^(\s*[-*+]\s)/);
+      const numberedMatch = currentLine.match(/^(\s*)(\d+)\.\s/);
+      
+      if (bulletMatch) {
+        e.preventDefault();
+        const indent = bulletMatch[1];
+        const newContent = content.substring(0, start) + '\n' + indent + content.substring(start);
+        onChange(newContent);
+        
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+        }, 0);
+      } else if (numberedMatch) {
+        e.preventDefault();
+        const indent = numberedMatch[1];
+        const nextNumber = parseInt(numberedMatch[2]) + 1;
+        const newListItem = `${indent}${nextNumber}. `;
+        const newContent = content.substring(0, start) + '\n' + newListItem + content.substring(start);
+        onChange(newContent);
+        
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + newListItem.length;
+        }, 0);
+      }
+    }
+  }, [content, onChange]);
+
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     const cursorPosition = e.target.selectionStart;
@@ -291,6 +326,7 @@ export default function HashtagEditor({ content, onChange, placeholder }: Hashta
           ref={textareaRef}
           value={content}
           onChange={handleTextChange}
+          onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={placeholder || "Start writing... Use # to link to other entries"}
           className="min-h-[400px] resize-none border-0 focus-visible:ring-0 text-base leading-relaxed"
