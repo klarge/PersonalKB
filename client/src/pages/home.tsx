@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List, User, MapPin, Package, Download } from "lucide-react";
+import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package, Download } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,6 @@ import type { Entry } from "@shared/schema";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState<"list" | "grid">("list");
 
   const { data: allEntries = [], isLoading: isLoadingAll } = useQuery<Entry[]>({
     queryKey: ["/api/entries"],
@@ -164,7 +163,7 @@ export default function Home() {
                   <span className="ml-1 hidden md:inline">Journal</span>
                 </TabsTrigger>
                 <TabsTrigger value="notes" className="px-1 md:px-4 text-xs md:text-sm">
-                  <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
+                  <StickyNote className="h-3 w-3 md:h-4 md:w-4" />
                   <span className="ml-1 hidden md:inline">Notes</span>
                 </TabsTrigger>
                 <TabsTrigger value="people" className="px-1 md:px-4 text-xs md:text-sm">
@@ -181,31 +180,13 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
               
-              <div className="flex items-center justify-center space-x-2 md:justify-start">
-                <Button
-                  variant={view === "list" ? "default" : "outline"}
-                  size="sm"
-                  className="px-2"
-                  onClick={() => setView("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={view === "grid" ? "default" : "outline"}
-                  size="sm"
-                  className="px-2"
-                  onClick={() => setView("grid")}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
+
             </div>
 
             <TabsContent value="all" className="mt-6">
               <EntryList 
                 entries={displayEntries} 
                 isLoading={isLoadingAll || isSearching} 
-                view={view}
                 emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
               />
             </TabsContent>
@@ -214,7 +195,6 @@ export default function Home() {
               <EntryList 
                 entries={journalEntries} 
                 isLoading={isLoadingJournal} 
-                view={view}
                 emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
               />
             </TabsContent>
@@ -223,7 +203,6 @@ export default function Home() {
               <EntryList 
                 entries={noteEntries} 
                 isLoading={isLoadingNotes} 
-                view={view}
                 emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
               />
             </TabsContent>
@@ -232,7 +211,6 @@ export default function Home() {
               <EntryList 
                 entries={peopleEntries} 
                 isLoading={isLoadingPeople} 
-                view={view}
                 emptyMessage="No people entries yet. Add someone to your knowledge base!"
               />
             </TabsContent>
@@ -241,7 +219,6 @@ export default function Home() {
               <EntryList 
                 entries={placeEntries} 
                 isLoading={isLoadingPlaces} 
-                view={view}
                 emptyMessage="No places recorded yet. Document important locations!"
               />
             </TabsContent>
@@ -250,7 +227,6 @@ export default function Home() {
               <EntryList 
                 entries={thingEntries} 
                 isLoading={isLoadingThings} 
-                view={view}
                 emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
               />
             </TabsContent>
@@ -319,7 +295,7 @@ function EntryCard({ entry }: { entry: Entry }) {
   const getEntryDisplay = (type: string) => {
     switch (type) {
       case "note":
-        return { icon: <Lightbulb className="h-5 w-5 text-yellow-500" />, label: "Note", variant: "secondary" as const };
+        return { icon: <StickyNote className="h-5 w-5 text-yellow-500" />, label: "Note", variant: "secondary" as const };
       case "person":
         return { icon: <User className="h-5 w-5 text-green-500" />, label: "Person", variant: "default" as const };
       case "place":
