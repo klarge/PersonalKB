@@ -330,7 +330,7 @@ function EntryCard({ entry }: { entry: Entry }) {
   );
 }
 
-// Simple dialog for creating new entries
+// Unified dialog for creating new entries
 function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -341,30 +341,21 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
   const getDialogInfo = (type: string) => {
     switch (type) {
       case "person":
-        return { icon: <User className="h-4 w-4" />, label: "Person", endpoint: "/api/people", placeholder: "Person's name..." };
+        return { icon: <User className="h-4 w-4" />, label: "Person", placeholder: "Person's name..." };
       case "place":
-        return { icon: <MapPin className="h-4 w-4" />, label: "Place", endpoint: "/api/places", placeholder: "Place name..." };
+        return { icon: <MapPin className="h-4 w-4" />, label: "Place", placeholder: "Place name..." };
       case "thing":
-        return { icon: <Package className="h-4 w-4" />, label: "Thing", endpoint: "/api/things", placeholder: "Thing name..." };
+        return { icon: <Package className="h-4 w-4" />, label: "Thing", placeholder: "Thing name..." };
       default:
-        return { icon: <Plus className="h-4 w-4" />, label: "Entry", endpoint: "/api/entries", placeholder: "Entry title..." };
+        return { icon: <Plus className="h-4 w-4" />, label: "Entry", placeholder: "Entry title..." };
     }
   };
 
-  const { icon, label, endpoint, placeholder } = getDialogInfo(type);
+  const { icon, label, placeholder } = getDialogInfo(type);
 
   const createMutation = useMutation({
-    mutationFn: async (data: { title: string }) => {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to create ${label.toLowerCase()}`);
-      }
+    mutationFn: async (data: { title: string; type: string }) => {
+      const response = await apiRequest("POST", "/api/entries", data);
       return response.json();
     },
     onSuccess: (newEntry) => {
@@ -399,7 +390,7 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
       });
       return;
     }
-    createMutation.mutate({ title: title.trim() });
+    createMutation.mutate({ title: title.trim(), type });
   };
 
   return (
