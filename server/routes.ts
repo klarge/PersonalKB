@@ -56,7 +56,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const entries = await storage.getEntriesByUser(userId);
+      const type = req.query.type as "journal" | "note" | undefined;
+      const entries = await storage.getEntriesByUser(userId, type);
       res.json(entries);
     } catch (error) {
       console.error("Error fetching entries:", error);
@@ -67,6 +68,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/entries/:id", isAuthenticated, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
       const entry = await storage.getEntryById(entryId);
       
       if (!entry) {
@@ -106,6 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           title,
           content: "",
+          type: "journal",
           date: today,
         });
       }
@@ -126,6 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const entryData = insertEntrySchema.parse({
         ...req.body,
         userId,
+        type: req.body.type || "journal",
         date: new Date(req.body.date || Date.now()),
       });
 

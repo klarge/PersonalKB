@@ -25,13 +25,13 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   
   // Entry operations
-  getEntriesByUser(userId: string): Promise<Entry[]>;
+  getEntriesByUser(userId: string, type?: "journal" | "note"): Promise<Entry[]>;
   getEntryById(id: number): Promise<Entry | undefined>;
   getEntryByDate(userId: string, date: Date): Promise<Entry | undefined>;
   createEntry(entry: InsertEntry): Promise<Entry>;
   updateEntry(id: number, entry: Partial<InsertEntry>): Promise<Entry>;
   deleteEntry(id: number): Promise<void>;
-  searchEntries(userId: string, query: string): Promise<Entry[]>;
+  searchEntries(userId: string, query: string, type?: "journal" | "note"): Promise<Entry[]>;
   
   // Tag operations
   getOrCreateTag(name: string): Promise<Tag>;
@@ -71,11 +71,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Entry operations
-  async getEntriesByUser(userId: string): Promise<Entry[]> {
+  async getEntriesByUser(userId: string, type?: "journal" | "note"): Promise<Entry[]> {
+    const conditions = [eq(entries.userId, userId)];
+    if (type) {
+      conditions.push(eq(entries.type, type));
+    }
+    
     return await db
       .select()
       .from(entries)
-      .where(eq(entries.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(entries.date));
   }
 
@@ -121,19 +126,23 @@ export class DatabaseStorage implements IStorage {
     await db.delete(entries).where(eq(entries.id, id));
   }
 
-  async searchEntries(userId: string, query: string): Promise<Entry[]> {
+  async searchEntries(userId: string, query: string, type?: "journal" | "note"): Promise<Entry[]> {
+    const conditions = [
+      eq(entries.userId, userId),
+      or(
+        ilike(entries.title, `%${query}%`),
+        ilike(entries.content, `%${query}%`)
+      )
+    ];
+    
+    if (type) {
+      conditions.push(eq(entries.type, type));
+    }
+    
     return await db
       .select()
       .from(entries)
-      .where(
-        and(
-          eq(entries.userId, userId),
-          or(
-            ilike(entries.title, `%${query}%`),
-            ilike(entries.content, `%${query}%`)
-          )
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(entries.date));
   }
 

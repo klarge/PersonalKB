@@ -41,6 +41,7 @@ export const entries = pgTable("entries", {
   userId: varchar("user_id").notNull(),
   title: varchar("title").notNull(),
   content: text("content").notNull(),
+  type: varchar("type", { enum: ["journal", "note"] }).notNull().default("journal"),
   date: timestamp("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
