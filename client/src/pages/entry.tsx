@@ -102,7 +102,7 @@ export default function EntryPage() {
   };
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+    if (window.confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
       deleteMutation.mutate();
     }
   };

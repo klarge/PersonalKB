@@ -120,12 +120,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const entryData = insertEntrySchema.parse({
-        ...req.body,
+      const { title, content, type } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const entry = await storage.createEntry({
         userId,
+        title,
+        content: content || "",
+        type: type || "journal",
+        date: new Date(),
       });
 
-      const entry = await storage.createEntry(entryData);
       res.json(entry);
     } catch (error) {
       console.error("Error creating entry:", error);
