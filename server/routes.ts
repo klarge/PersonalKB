@@ -251,6 +251,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export entries as markdown
+  app.get("/api/export/markdown", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const entries = await storage.getEntriesByUser(userId);
+      
+      // Group entries by type
+      const groupedEntries = entries.reduce((groups: any, entry: any) => {
+        const type = entry.type || 'journal';
+        if (!groups[type]) groups[type] = [];
+        groups[type].push(entry);
+        return groups;
+      }, {});
+
+      // Generate markdown content
+      let markdown = `# Knowledge Export\n\nExported on ${new Date().toLocaleDateString()}\n\n`;
+      
+      const typeLabels: any = {
+        journal: 'Journal Entries',
+        note: 'Quick Notes', 
+        person: 'People',
+        place: 'Places',
+        thing: 'Things'
+      };
+
+      Object.entries(groupedEntries).forEach(([type, typeEntries]: [string, any]) => {
+        markdown += `## ${typeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1)}\n\n`;
+        
+        typeEntries.forEach((entry: any) => {
+          markdown += `### ${entry.title}\n`;
+          markdown += `*${new Date(entry.date).toLocaleDateString()}*\n\n`;
+          if (entry.content) {
+            markdown += `${entry.content}\n\n`;
+          }
+          markdown += `---\n\n`;
+        });
+      });
+
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', `attachment; filename="knowledge-export-${new Date().toISOString().split('T')[0]}.md"`);
+      res.send(markdown);
+    } catch (error) {
+      console.error("Error exporting entries:", error);
+      res.status(500).json({ message: "Failed to export entries" });
+    }
+  });
+
 
 
   // Image upload

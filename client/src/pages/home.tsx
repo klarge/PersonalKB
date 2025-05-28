@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List, User, MapPin, Package } from "lucide-react";
+import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List, User, MapPin, Package, Download } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +88,15 @@ export default function Home() {
                 <CreateEntryDialog type="person" />
                 <CreateEntryDialog type="place" />
                 <CreateEntryDialog type="thing" />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('/api/export/markdown', '_blank')}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Export
+                </Button>
               </div>
             </div>
           </div>
