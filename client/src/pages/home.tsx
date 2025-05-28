@@ -92,7 +92,14 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open('/api/export/markdown', '_blank')}
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = '/api/export/markdown';
+                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.md`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
                 >
                   <Download className="h-4 w-4 mr-1" />
                   Export
