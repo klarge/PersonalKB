@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen } from "lucide-react";
+import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -105,7 +105,55 @@ export default function EntryPage() {
     );
   }
 
-  const isNote = entry?.type === "note";
+  // Get display info based on entry type
+  const getEntryDisplay = (type: string) => {
+    switch (type) {
+      case "note":
+        return { icon: <Lightbulb className="h-5 w-5 text-yellow-500" />, label: "Note", variant: "secondary" as const };
+      case "person":
+        return { icon: <User className="h-5 w-5 text-green-500" />, label: "Person", variant: "default" as const };
+      case "place":
+        return { icon: <MapPin className="h-5 w-5 text-red-500" />, label: "Place", variant: "default" as const };
+      case "thing":
+        return { icon: <Package className="h-5 w-5 text-purple-500" />, label: "Thing", variant: "default" as const };
+      default:
+        return { icon: <BookOpen className="h-5 w-5 text-blue-500" />, label: "Journal", variant: "default" as const };
+    }
+  };
+
+  const { icon, label, variant } = getEntryDisplay(entry?.type || "journal");
+
+  // Get placeholder text based on entry type
+  const getPlaceholderText = (type?: string) => {
+    switch (type) {
+      case "note":
+        return "Note title...";
+      case "person":
+        return "Person's name...";
+      case "place":
+        return "Place name...";
+      case "thing":
+        return "Thing name...";
+      default:
+        return "Journal entry title...";
+    }
+  };
+
+  // Get content placeholder based on entry type
+  const getContentPlaceholder = (type?: string) => {
+    switch (type) {
+      case "note":
+        return "Write your note here... Use #hashtags to connect related ideas!";
+      case "person":
+        return "Write about this person... Use #hashtags to link related thoughts!";
+      case "place":
+        return "Describe this place... Use #hashtags to connect related entries!";
+      case "thing":
+        return "Document this item or concept... Use #hashtags to link ideas!";
+      default:
+        return "Start writing your journal entry... Use #hashtags to link your thoughts!";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,13 +170,9 @@ export default function EntryPage() {
               </Link>
               
               <div className="flex items-center space-x-2">
-                {isNote ? (
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
-                ) : (
-                  <BookOpen className="h-5 w-5 text-blue-500" />
-                )}
-                <Badge variant={isNote ? "secondary" : "default"}>
-                  {isNote ? "Note" : "Journal"}
+                {icon}
+                <Badge variant={variant}>
+                  {label}
                 </Badge>
                 {isToday && (
                   <Badge variant="outline">
@@ -159,7 +203,7 @@ export default function EntryPage() {
             <div className="mb-6">
               <Input
                 type="text"
-                placeholder={isNote ? "Note title..." : "Journal entry title..."}
+                placeholder={getPlaceholderText(entry?.type)}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400"
@@ -170,14 +214,14 @@ export default function EntryPage() {
             {entry && (
               <div className="flex items-center space-x-4 text-sm text-gray-500 mb-6 pb-4 border-b">
                 <span>
-                  Created: {new Date(entry.createdAt || entry.date).toLocaleDateString("en-US", {
+                  Created: {entry.date ? new Date(entry.date).toLocaleDateString("en-US", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  })}
+                  }) : "Recently"}
                 </span>
-                {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+                {entry.updatedAt && entry.updatedAt !== entry.date && (
                   <span>
                     Updated: {new Date(entry.updatedAt).toLocaleDateString()}
                   </span>
@@ -188,10 +232,7 @@ export default function EntryPage() {
             {/* Content Textarea */}
             <div className="mb-6">
               <Textarea
-                placeholder={isNote 
-                  ? "Write your note here... Use #hashtags to connect related ideas!" 
-                  : "Start writing your journal entry... Use #hashtags to link your thoughts!"
-                }
+                placeholder={getContentPlaceholder(entry?.type)}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="min-h-[400px] border-none px-0 focus:ring-0 resize-none text-base leading-relaxed"
