@@ -101,8 +101,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/entries/:id", isAuthenticated, async (req: any, res) => {
     try {
+      // Skip this route if the ID is "today" - should be handled by the specific route above
+      if (req.params.id === "today") {
+        return res.status(400).json({ message: "Use /api/entries/today endpoint" });
+      }
+      
       const entryId = parseInt(req.params.id);
-      if (isNaN(entryId)) {
+      if (isNaN(entryId) || !req.params.id) {
         return res.status(400).json({ message: "Invalid entry ID" });
       }
       const entry = await storage.getEntryById(entryId);

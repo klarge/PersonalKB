@@ -85,6 +85,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEntryById(id: number): Promise<Entry | undefined> {
+    if (!id || isNaN(id)) {
+      throw new Error(`Invalid entry ID: ${id}`);
+    }
     const [entry] = await db.select().from(entries).where(eq(entries.id, id));
     return entry;
   }
