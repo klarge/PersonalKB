@@ -39,7 +39,7 @@ export const entries = pgTable("entries", {
   userId: varchar("user_id").notNull(),
   title: varchar("title").notNull(),
   content: text("content").notNull().default(""),
-  type: varchar("type").notNull(), // "journal" or "note"
+  type: varchar("type").notNull(), // "journal", "note", "person", "place", "thing"
   date: timestamp("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

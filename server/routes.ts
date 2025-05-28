@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const type = req.query.type as "journal" | "note" | undefined;
+      const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
       const entries = await storage.getEntriesByUser(userId, type);
       res.json(entries);
     } catch (error) {
@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const query = req.query.q as string;
-      const type = req.query.type as "journal" | "note" | undefined;
+      const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
 
       if (!query) {
         return res.status(400).json({ message: "Search query is required" });
@@ -228,6 +228,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching entries:", error);
       res.status(500).json({ message: "Failed to search entries" });
+    }
+  });
+
+  // Autocomplete entries for backlinking
+  app.get("/api/entries/autocomplete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const entries = await storage.getAllEntriesForAutocomplete(userId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching autocomplete entries:", error);
+      res.status(500).json({ message: "Failed to fetch autocomplete entries" });
+    }
+  });
+
+  // Create new person entry
+  app.post("/api/people", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, content } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const entry = await storage.createEntry({
+        userId,
+        title,
+        content: content || "",
+        type: "person",
+        date: new Date(),
+      });
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating person entry:", error);
+      res.status(500).json({ message: "Failed to create person entry" });
+    }
+  });
+
+  // Create new place entry
+  app.post("/api/places", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, content } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const entry = await storage.createEntry({
+        userId,
+        title,
+        content: content || "",
+        type: "place",
+        date: new Date(),
+      });
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating place entry:", error);
+      res.status(500).json({ message: "Failed to create place entry" });
+    }
+  });
+
+  // Create new thing entry
+  app.post("/api/things", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, content } = req.body;
+
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      const entry = await storage.createEntry({
+        userId,
+        title,
+        content: content || "",
+        type: "thing",
+        date: new Date(),
+      });
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating thing entry:", error);
+      res.status(500).json({ message: "Failed to create thing entry" });
     }
   });
 
