@@ -90,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get tags for this entry
-      const tags = await storage.getTagsByEntry(entry.id);
+      const tags = entry?.id ? await storage.getTagsByEntry(entry.id) : [];
       
       res.json({ ...entry, tags });
     } catch (error) {
