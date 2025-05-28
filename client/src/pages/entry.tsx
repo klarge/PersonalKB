@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package, 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import RichTextEditor from "@/components/rich-text-editor";
+import HashtagEditor from "@/components/hashtag-editor";
 import type { Entry } from "@shared/schema";
 
 export default function EntryPage() {
@@ -113,7 +113,235 @@ export default function EntryPage() {
       });
       return;
     }
-    updateMutation.mutate({ title: title.trim(), content: content.trim() });
+    updateMutation.mutate({ title: title.trim(), content: content.trim(), structuredData });
+  };
+
+  const updateStructuredField = (field: string, value: string) => {
+    setStructuredData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const getStructuredFields = () => {
+    if (!entry?.type) return null;
+
+    switch (entry.type) {
+      case "person":
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={structuredData.name || ""}
+                onChange={(e) => updateStructuredField("name", e.target.value)}
+                placeholder="Enter full name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                value={structuredData.dateOfBirth || ""}
+                onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={structuredData.phone || ""}
+                onChange={(e) => updateStructuredField("phone", e.target.value)}
+                placeholder="Phone number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={structuredData.email || ""}
+                onChange={(e) => updateStructuredField("email", e.target.value)}
+                placeholder="Email address"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={structuredData.address || ""}
+                onChange={(e) => updateStructuredField("address", e.target.value)}
+                placeholder="Home address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="occupation">Occupation</Label>
+              <Input
+                id="occupation"
+                value={structuredData.occupation || ""}
+                onChange={(e) => updateStructuredField("occupation", e.target.value)}
+                placeholder="Job title/profession"
+              />
+            </div>
+            <div>
+              <Label htmlFor="company">Company</Label>
+              <Input
+                id="company"
+                value={structuredData.company || ""}
+                onChange={(e) => updateStructuredField("company", e.target.value)}
+                placeholder="Company name"
+              />
+            </div>
+          </div>
+        );
+
+      case "place":
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={structuredData.address || ""}
+                onChange={(e) => updateStructuredField("address", e.target.value)}
+                placeholder="Full address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={structuredData.category || ""}
+                onChange={(e) => updateStructuredField("category", e.target.value)}
+                placeholder="e.g., Restaurant, Park, Office"
+              />
+            </div>
+            <div>
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                type="url"
+                value={structuredData.website || ""}
+                onChange={(e) => updateStructuredField("website", e.target.value)}
+                placeholder="Website URL"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={structuredData.phone || ""}
+                onChange={(e) => updateStructuredField("phone", e.target.value)}
+                placeholder="Phone number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rating">Rating</Label>
+              <Input
+                id="rating"
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={structuredData.rating || ""}
+                onChange={(e) => updateStructuredField("rating", e.target.value)}
+                placeholder="1-5 stars"
+              />
+            </div>
+            <div>
+              <Label htmlFor="visitedDate">Last Visited</Label>
+              <Input
+                id="visitedDate"
+                type="date"
+                value={structuredData.visitedDate || ""}
+                onChange={(e) => updateStructuredField("visitedDate", e.target.value)}
+              />
+            </div>
+          </div>
+        );
+
+      case "thing":
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="brand">Brand</Label>
+              <Input
+                id="brand"
+                value={structuredData.brand || ""}
+                onChange={(e) => updateStructuredField("brand", e.target.value)}
+                placeholder="Brand name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="model">Model</Label>
+              <Input
+                id="model"
+                value={structuredData.model || ""}
+                onChange={(e) => updateStructuredField("model", e.target.value)}
+                placeholder="Model name/number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                value={structuredData.category || ""}
+                onChange={(e) => updateStructuredField("category", e.target.value)}
+                placeholder="e.g., Electronics, Book, Tool"
+              />
+            </div>
+            <div>
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                value={structuredData.price || ""}
+                onChange={(e) => updateStructuredField("price", e.target.value)}
+                placeholder="Purchase price"
+              />
+            </div>
+            <div>
+              <Label htmlFor="purchaseDate">Purchase Date</Label>
+              <Input
+                id="purchaseDate"
+                type="date"
+                value={structuredData.purchaseDate || ""}
+                onChange={(e) => updateStructuredField("purchaseDate", e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={structuredData.location || ""}
+                onChange={(e) => updateStructuredField("location", e.target.value)}
+                placeholder="Where is it stored?"
+              />
+            </div>
+            <div>
+              <Label htmlFor="serialNumber">Serial Number</Label>
+              <Input
+                id="serialNumber"
+                value={structuredData.serialNumber || ""}
+                onChange={(e) => updateStructuredField("serialNumber", e.target.value)}
+                placeholder="Serial/ID number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="warranty">Warranty Until</Label>
+              <Input
+                id="warranty"
+                type="date"
+                value={structuredData.warranty || ""}
+                onChange={(e) => updateStructuredField("warranty", e.target.value)}
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   const handleDelete = () => {

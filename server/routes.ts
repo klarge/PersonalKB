@@ -53,6 +53,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get entries for autocomplete (hashtag suggestions)
+  app.get("/api/entries/autocomplete", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const entries = await storage.getAllEntriesForAutocomplete(userId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching autocomplete entries:", error);
+      res.status(500).json({ message: "Failed to fetch autocomplete entries" });
+    }
+  });
+
   // Today's journal route (must come before /:id route)
   app.get("/api/entries/today", isAuthenticated, async (req: any, res) => {
     try {
