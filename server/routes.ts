@@ -65,33 +65,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/entries/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const entryId = parseInt(req.params.id);
-      if (isNaN(entryId)) {
-        return res.status(400).json({ message: "Invalid entry ID" });
-      }
-      const entry = await storage.getEntryById(entryId);
-      
-      if (!entry) {
-        return res.status(404).json({ message: "Entry not found" });
-      }
-
-      // Check if user owns this entry
-      if (entry.userId !== req.user.claims.sub) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Get tags for this entry
-      const tags = await storage.getTagsByEntry(entryId);
-      
-      res.json({ ...entry, tags });
-    } catch (error) {
-      console.error("Error fetching entry:", error);
-      res.status(500).json({ message: "Failed to fetch entry" });
-    }
-  });
-
   app.get("/api/entries/today", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -122,6 +95,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching today's entry:", error);
       res.status(500).json({ message: "Failed to fetch today's entry" });
+    }
+  });
+
+  app.get("/api/entries/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+      const entry = await storage.getEntryById(entryId);
+      
+      if (!entry) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+
+      // Check if user owns this entry
+      if (entry.userId !== req.user.claims.sub) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get tags for this entry
+      const tags = await storage.getTagsByEntry(entryId);
+      
+      res.json({ ...entry, tags });
+    } catch (error) {
+      console.error("Error fetching entry:", error);
+      res.status(500).json({ message: "Failed to fetch entry" });
     }
   });
 
