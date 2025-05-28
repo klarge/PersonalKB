@@ -26,12 +26,21 @@ export default function EntryPage() {
   const entryId = isToday ? null : parseInt(params?.id || "0");
 
   // Query for entry data
-  const { data: entry, isLoading } = useQuery<Entry & { tags?: any[] }>({
+  const { data: entry, isLoading, error } = useQuery<Entry & { tags?: any[] }>({
     queryKey: isToday ? ["/api/entries/today"] : ["/api/entries", entryId],
-    queryFn: isToday 
-      ? () => fetch("/api/entries/today").then(res => res.json())
-      : () => fetch(`/api/entries/${entryId}`).then(res => res.json()),
+    queryFn: async () => {
+      const url = isToday ? "/api/entries/today" : `/api/entries/${entryId}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Entry not found");
+        }
+        throw new Error(`Failed to fetch entry: ${res.status}`);
+      }
+      return res.json();
+    },
     enabled: isToday || (!!entryId && !isNaN(entryId)),
+    retry: false,
   });
 
   // Query for backlinks - entries that reference this one
@@ -452,6 +461,35 @@ export default function EntryPage() {
         return <BookOpen className="h-4 w-4 text-blue-500" />;
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-gray-600">Loading entry...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || (!entry && !isToday)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Entry not found</h2>
+          <p className="text-gray-600 mb-6">The entry you're looking for doesn't exist.</p>
+          <Link href="/">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
