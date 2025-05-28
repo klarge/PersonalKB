@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package } from "lucide-react";
+import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import type { Entry } from "@shared/schema";
 
 export default function EntryPage() {
@@ -17,6 +17,7 @@ export default function EntryPage() {
   const [content, setContent] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const isToday = params?.id === "today";
   const entryId = isToday ? null : parseInt(params?.id || "0");
@@ -63,6 +64,31 @@ export default function EntryPage() {
     },
   });
 
+  // Mutation for deleting entry
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!entry?.id) throw new Error("Entry not found");
+      
+      const response = await apiRequest("DELETE", `/api/entries/${entry.id}`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Entry deleted",
+        description: "Your entry has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      setLocation("/");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete entry. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSave = () => {
     if (!title.trim()) {
       toast({
@@ -73,6 +99,12 @@ export default function EntryPage() {
       return;
     }
     updateMutation.mutate({ title: title.trim(), content: content.trim() });
+  };
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+      deleteMutation.mutate();
+    }
   };
 
   // Extract hashtags from content
@@ -184,14 +216,28 @@ export default function EntryPage() {
               </div>
             </div>
             
-            <Button 
-              onClick={handleSave}
-              disabled={updateMutation.isPending || !title.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {updateMutation.isPending ? "Saving..." : "Save"}
-            </Button>
+            <div className="flex items-center space-x-2">
+              {!isToday && (
+                <Button 
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  variant="outline"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                </Button>
+              )}
+              
+              <Button 
+                onClick={handleSave}
+                disabled={updateMutation.isPending || !title.trim()}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {updateMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

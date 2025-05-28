@@ -355,7 +355,16 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
 
   const createMutation = useMutation({
     mutationFn: async (data: { title: string }) => {
-      const response = await apiRequest("POST", endpoint, data);
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create ${label.toLowerCase()}`);
+      }
       return response.json();
     },
     onSuccess: (newEntry) => {
@@ -370,7 +379,8 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
       // Navigate to the new entry
       setLocation(`/entry/${newEntry.id}`);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Create entry error:", error);
       toast({
         title: "Error",
         description: `Failed to create ${label.toLowerCase()}. Please try again.`,
