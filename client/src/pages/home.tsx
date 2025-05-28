@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List, User, MapPin, Package } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Entry } from "@shared/schema";
 
 export default function Home() {
@@ -25,6 +28,21 @@ export default function Home() {
   const { data: noteEntries = [], isLoading: isLoadingNotes } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "note" }],
     queryFn: () => fetch("/api/entries?type=note").then(res => res.json()),
+  });
+
+  const { data: peopleEntries = [], isLoading: isLoadingPeople } = useQuery<Entry[]>({
+    queryKey: ["/api/entries", { type: "person" }],
+    queryFn: () => fetch("/api/entries?type=person").then(res => res.json()),
+  });
+
+  const { data: placeEntries = [], isLoading: isLoadingPlaces } = useQuery<Entry[]>({
+    queryKey: ["/api/entries", { type: "place" }],
+    queryFn: () => fetch("/api/entries?type=place").then(res => res.json()),
+  });
+
+  const { data: thingEntries = [], isLoading: isLoadingThings } = useQuery<Entry[]>({
+    queryKey: ["/api/entries", { type: "thing" }],
+    queryFn: () => fetch("/api/entries?type=thing").then(res => res.json()),
   });
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery<Entry[]>({
@@ -65,6 +83,12 @@ export default function Home() {
                   </Button>
                 }
               />
+              
+              <div className="hidden md:flex items-center space-x-2">
+                <CreateEntryDialog type="person" />
+                <CreateEntryDialog type="place" />
+                <CreateEntryDialog type="thing" />
+              </div>
             </div>
           </div>
         </div>
@@ -99,6 +123,18 @@ export default function Home() {
                 <TabsTrigger value="notes">
                   <Lightbulb className="h-4 w-4 mr-2" />
                   Notes
+                </TabsTrigger>
+                <TabsTrigger value="people">
+                  <User className="h-4 w-4 mr-2" />
+                  People
+                </TabsTrigger>
+                <TabsTrigger value="places">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Places
+                </TabsTrigger>
+                <TabsTrigger value="things">
+                  <Package className="h-4 w-4 mr-2" />
+                  Things
                 </TabsTrigger>
               </TabsList>
               
@@ -144,6 +180,33 @@ export default function Home() {
                 isLoading={isLoadingNotes} 
                 view={view}
                 emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
+              />
+            </TabsContent>
+
+            <TabsContent value="people" className="mt-6">
+              <EntryList 
+                entries={peopleEntries} 
+                isLoading={isLoadingPeople} 
+                view={view}
+                emptyMessage="No people entries yet. Add someone to your knowledge base!"
+              />
+            </TabsContent>
+
+            <TabsContent value="places" className="mt-6">
+              <EntryList 
+                entries={placeEntries} 
+                isLoading={isLoadingPlaces} 
+                view={view}
+                emptyMessage="No places recorded yet. Document important locations!"
+              />
+            </TabsContent>
+
+            <TabsContent value="things" className="mt-6">
+              <EntryList 
+                entries={thingEntries} 
+                isLoading={isLoadingThings} 
+                view={view}
+                emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
               />
             </TabsContent>
           </Tabs>
@@ -202,24 +265,37 @@ function EntryList({ entries, isLoading, view, emptyMessage }: EntryListProps) {
 }
 
 function EntryCard({ entry }: { entry: Entry }) {
-  const isNote = entry.type === "note";
   const preview = entry.content.slice(0, 200) + (entry.content.length > 200 ? "..." : "");
   
   // Extract hashtags
   const hashtags = entry.content.match(/#[\w]+/g) || [];
+  
+  // Get icon and styling based on entry type
+  const getEntryDisplay = (type: string) => {
+    switch (type) {
+      case "note":
+        return { icon: <Lightbulb className="h-5 w-5 text-yellow-500" />, label: "Note", variant: "secondary" as const };
+      case "person":
+        return { icon: <User className="h-5 w-5 text-green-500" />, label: "Person", variant: "default" as const };
+      case "place":
+        return { icon: <MapPin className="h-5 w-5 text-red-500" />, label: "Place", variant: "default" as const };
+      case "thing":
+        return { icon: <Package className="h-5 w-5 text-purple-500" />, label: "Thing", variant: "default" as const };
+      default:
+        return { icon: <BookOpen className="h-5 w-5 text-blue-500" />, label: "Journal", variant: "default" as const };
+    }
+  };
+
+  const { icon, label, variant } = getEntryDisplay(entry.type);
   
   return (
     <Link href={`/entry/${entry.id}`}>
       <div className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer p-6">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-2">
-            {isNote ? (
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
-            ) : (
-              <BookOpen className="h-5 w-5 text-blue-500" />
-            )}
-            <Badge variant={isNote ? "secondary" : "default"}>
-              {isNote ? "Note" : "Journal"}
+            {icon}
+            <Badge variant={variant}>
+              {label}
             </Badge>
           </div>
           <span className="text-sm text-gray-500">
@@ -251,5 +327,108 @@ function EntryCard({ entry }: { entry: Entry }) {
         )}
       </div>
     </Link>
+  );
+}
+
+// Simple dialog for creating new entries
+function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const getDialogInfo = (type: string) => {
+    switch (type) {
+      case "person":
+        return { icon: <User className="h-4 w-4" />, label: "Person", endpoint: "/api/people", placeholder: "Person's name..." };
+      case "place":
+        return { icon: <MapPin className="h-4 w-4" />, label: "Place", endpoint: "/api/places", placeholder: "Place name..." };
+      case "thing":
+        return { icon: <Package className="h-4 w-4" />, label: "Thing", endpoint: "/api/things", placeholder: "Thing name..." };
+      default:
+        return { icon: <Plus className="h-4 w-4" />, label: "Entry", endpoint: "/api/entries", placeholder: "Entry title..." };
+    }
+  };
+
+  const { icon, label, endpoint, placeholder } = getDialogInfo(type);
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { title: string }) => {
+      const response = await apiRequest("POST", endpoint, data);
+      return response.json();
+    },
+    onSuccess: (newEntry) => {
+      toast({
+        title: `${label} created`,
+        description: `Your ${label.toLowerCase()} entry has been created successfully.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries", { type }] });
+      setTitle("");
+      setOpen(false);
+      // Navigate to the new entry
+      window.location.href = `/entry/${newEntry.id}`;
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: `Failed to create ${label.toLowerCase()}. Please try again.`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast({
+        title: "Missing title",
+        description: `Please provide a name for your ${label.toLowerCase()}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    createMutation.mutate({ title: title.trim() });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          {icon}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>Add {label}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Input
+              type="text"
+              placeholder={placeholder}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createMutation.isPending || !title.trim()}
+            >
+              {createMutation.isPending ? "Creating..." : `Add ${label}`}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
