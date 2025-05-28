@@ -20,11 +20,11 @@ export default function Home() {
   });
 
   const { data: journalEntries = [] } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "journal" }],
+    queryKey: ["/api/entries?type=journal"],
   });
 
   const { data: notes = [] } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "note" }],
+    queryKey: ["/api/entries?type=note"],
   });
 
   const { data: todayEntry } = useQuery({

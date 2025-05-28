@@ -36,6 +36,8 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
         description: "Your quick note has been saved.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries?type=note"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries?type=journal"] });
       setTitle("");
       setContent("");
       setOpen(false);
