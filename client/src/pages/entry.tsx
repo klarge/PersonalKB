@@ -519,13 +519,24 @@ export default function EntryPage() {
               </div>
             )}
             
-            {/* Content Textarea */}
+            {/* Structured Fields */}
+            {getStructuredFields() && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-4">Details</h3>
+                {getStructuredFields()}
+              </div>
+            )}
+
+            {/* Content Editor with Hashtag Support */}
             <div className="mb-6">
-              <Textarea
+              <h3 className="text-lg font-medium mb-4">
+                {entry?.type === "journal" ? "Journal Entry" : 
+                 entry?.type === "note" ? "Notes" : "Description"}
+              </h3>
+              <HashtagEditor
+                content={content}
+                onChange={setContent}
                 placeholder={getContentPlaceholder(entry?.type)}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="min-h-[400px] border-none px-0 focus:ring-0 resize-none text-base leading-relaxed"
               />
             </div>
             

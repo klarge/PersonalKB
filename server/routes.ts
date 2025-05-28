@@ -263,47 +263,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export entries as markdown
+  // Export entries as individual markdown files in a zip
   app.get("/api/export/markdown", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const entries = await storage.getEntriesByUser(userId);
       
-      // Group entries by type
-      const groupedEntries = entries.reduce((groups: any, entry: any) => {
-        const type = entry.type || 'journal';
-        if (!groups[type]) groups[type] = [];
-        groups[type].push(entry);
-        return groups;
-      }, {});
-
-      // Generate markdown content
-      let markdown = `# Knowledge Export\n\nExported on ${new Date().toLocaleDateString()}\n\n`;
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
       
-      const typeLabels: any = {
-        journal: 'Journal Entries',
-        note: 'Quick Notes', 
-        person: 'People',
-        place: 'Places',
-        thing: 'Things'
-      };
+      // Create folders for each entry type
+      const journalFolder = zip.folder("01-Journal");
+      const notesFolder = zip.folder("02-Quick-Notes");
+      const peopleFolder = zip.folder("03-People");
+      const placesFolder = zip.folder("04-Places");
+      const thingsFolder = zip.folder("05-Things");
 
-      Object.entries(groupedEntries).forEach(([type, typeEntries]: [string, any]) => {
-        markdown += `## ${typeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1)}\n\n`;
-        
-        typeEntries.forEach((entry: any) => {
-          markdown += `### ${entry.title}\n`;
-          markdown += `*${new Date(entry.date).toLocaleDateString()}*\n\n`;
-          if (entry.content) {
-            markdown += `${entry.content}\n\n`;
+      // Process each entry
+      for (const entry of entries) {
+        let content = `# ${entry.title}\n\n`;
+        content += `**Type:** ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}\n`;
+        content += `**Created:** ${new Date(entry.date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}\n\n`;
+
+        // Add structured data if available
+        if (entry.structuredData && Object.keys(entry.structuredData).length > 0) {
+          content += `## Details\n\n`;
+          for (const [key, value] of Object.entries(entry.structuredData)) {
+            if (value) {
+              const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+              content += `**${label}:** ${value}\n`;
+            }
           }
-          markdown += `---\n\n`;
-        });
-      });
+          content += `\n`;
+        }
 
-      res.setHeader('Content-Type', 'text/markdown');
-      res.setHeader('Content-Disposition', `attachment; filename="knowledge-export-${new Date().toISOString().split('T')[0]}.md"`);
-      res.send(markdown);
+        // Add main content
+        if (entry.content.trim()) {
+          content += `## ${entry.type === 'journal' ? 'Journal Entry' : 
+                              entry.type === 'note' ? 'Notes' : 'Description'}\n\n`;
+          content += `${entry.content}\n\n`;
+        }
+
+        // Create safe filename
+        const safeTitle = entry.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
+        const datePrefix = new Date(entry.date).toISOString().split('T')[0];
+        const filename = `${datePrefix}-${safeTitle}.md`;
+
+        // Add to appropriate folder
+        switch (entry.type) {
+          case 'journal':
+            journalFolder?.file(filename, content);
+            break;
+          case 'note':
+            notesFolder?.file(filename, content);
+            break;
+          case 'person':
+            peopleFolder?.file(filename, content);
+            break;
+          case 'place':
+            placesFolder?.file(filename, content);
+            break;
+          case 'thing':
+            thingsFolder?.file(filename, content);
+            break;
+        }
+      }
+
+      // Add a README file
+      const readme = `# My Knowledge Base Export\n\n`;
+      const readmeContent = readme + 
+        `**Generated:** ${new Date().toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })}\n\n` +
+        `**Total Entries:** ${entries.length}\n\n` +
+        `## Folder Structure\n\n` +
+        `- **01-Journal**: Daily journal entries and reflections\n` +
+        `- **02-Quick-Notes**: Quick thoughts and ideas\n` +
+        `- **03-People**: Information about people you know\n` +
+        `- **04-Places**: Details about places you've visited or want to visit\n` +
+        `- **05-Things**: Documentation of items, concepts, and tools\n\n` +
+        `## How to Use\n\n` +
+        `Each entry is saved as a separate markdown file with:\n` +
+        `- Structured metadata (name, dates, etc.)\n` +
+        `- Your personal notes and thoughts\n` +
+        `- Hashtag connections preserved as links\n\n` +
+        `You can open these files in any markdown editor or note-taking app!\n`;
+
+      zip.file("README.md", readmeContent);
+
+      // Generate zip buffer
+      const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+
+      // Send as zip file
+      const filename = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(zipBuffer);
     } catch (error) {
       console.error("Error exporting entries:", error);
       res.status(500).json({ message: "Failed to export entries" });
