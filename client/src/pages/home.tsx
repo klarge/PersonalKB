@@ -67,23 +67,26 @@ export default function Home() {
               <h1 className="text-xl font-semibold text-gray-900">Knowledge Hub</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Link href="/entry/today">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Today's Journal
+                  <Calendar className="h-4 w-4 mr-2 sm:mr-2" />
+                  <span className="hidden sm:inline">Today's Journal</span>
+                  <span className="sm:hidden">Today</span>
                 </Button>
               </Link>
               
               <QuickNoteDialog
                 trigger={
                   <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Quick Note
+                    <Plus className="h-4 w-4 mr-2 sm:mr-2" />
+                    <span className="hidden sm:inline">Quick Note</span>
+                    <span className="sm:hidden">Note</span>
                   </Button>
                 }
               />
               
+              {/* Desktop buttons with text */}
               <div className="hidden md:flex items-center space-x-2">
                 <CreateEntryDialog type="person" />
                 <CreateEntryDialog type="place" />
@@ -95,7 +98,7 @@ export default function Home() {
                   onClick={() => {
                     const link = document.createElement('a');
                     link.href = '/api/export/markdown';
-                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.md`;
+                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -103,6 +106,29 @@ export default function Home() {
                 >
                   <Download className="h-4 w-4 mr-1" />
                   Export
+                </Button>
+              </div>
+
+              {/* Mobile version of desktop buttons */}
+              <div className="flex md:hidden items-center space-x-1">
+                <CreateEntryDialog type="person" />
+                <CreateEntryDialog type="place" />
+                <CreateEntryDialog type="thing" />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-2"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = '/api/export/markdown';
+                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  <Download className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -412,8 +438,9 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="md:px-3 px-2">
           {icon}
+          <span className="ml-2 hidden md:inline">{label}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px]">
