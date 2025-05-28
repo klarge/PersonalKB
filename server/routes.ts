@@ -73,11 +73,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!entry) {
         // Create today's entry if it doesn't exist
-        const title = `${today.toLocaleDateString("en-US", {
-          month: "long",
+        const title = today.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long", 
           day: "numeric",
           year: "numeric",
-        })}`;
+        });
         
         entry = await storage.createEntry({
           userId,

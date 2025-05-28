@@ -37,7 +37,7 @@ export default function EntryPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
-      if (!entry) throw new Error("Entry not found");
+      if (!entry?.id) throw new Error("Entry not found or invalid ID");
       
       const response = await apiRequest("PATCH", `/api/entries/${entry.id}`, data);
       return response.json();
