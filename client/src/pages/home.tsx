@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar, BookOpen, Lightbulb, Plus, Search, LayoutGrid, List, User, MapPin, Package } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Entry } from "@shared/schema";
@@ -336,6 +336,7 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
   const [title, setTitle] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const getDialogInfo = (type: string) => {
     switch (type) {
@@ -367,7 +368,7 @@ function CreateEntryDialog({ type }: { type: "person" | "place" | "thing" }) {
       setTitle("");
       setOpen(false);
       // Navigate to the new entry
-      window.location.href = `/entry/${newEntry.id}`;
+      setLocation(`/entry/${newEntry.id}`);
     },
     onError: () => {
       toast({

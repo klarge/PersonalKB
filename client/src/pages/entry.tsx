@@ -24,6 +24,7 @@ export default function EntryPage() {
   // Query for entry data
   const { data: entry, isLoading } = useQuery<Entry & { tags?: any[] }>({
     queryKey: isToday ? ["/api/entries/today"] : ["/api/entries", entryId],
+    queryFn: isToday ? undefined : () => fetch(`/api/entries/${entryId}`).then(res => res.json()),
     enabled: isToday || (!!entryId && !isNaN(entryId)),
   });
 
