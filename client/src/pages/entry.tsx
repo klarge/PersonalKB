@@ -5,16 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
+import RichTextEditor from "@/components/rich-text-editor";
 import type { Entry } from "@shared/schema";
 
 export default function EntryPage() {
   const [match, params] = useRoute("/entry/:id");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [structuredData, setStructuredData] = useState<any>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -36,12 +39,22 @@ export default function EntryPage() {
     if (entry) {
       setTitle(entry.title || "");
       setContent(entry.content || "");
+      setStructuredData(entry.structuredData || {});
+    } else if (isToday) {
+      // Auto-set title for today's journal
+      const today = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      setTitle(today);
     }
-  }, [entry]);
+  }, [entry, isToday]);
 
   // Mutation for updating entry
   const updateMutation = useMutation({
-    mutationFn: async (data: { title: string; content: string }) => {
+    mutationFn: async (data: { title: string; content: string; structuredData?: any }) => {
       if (!entry?.id) throw new Error("Entry not found");
       
       const response = await apiRequest("PATCH", `/api/entries/${entry.id}`, data);

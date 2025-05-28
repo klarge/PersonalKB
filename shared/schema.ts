@@ -40,6 +40,7 @@ export const entries = pgTable("entries", {
   title: varchar("title").notNull(),
   content: text("content").notNull().default(""),
   type: varchar("type").notNull(), // "journal", "note", "person", "place", "thing"
+  structuredData: jsonb("structured_data").default({}),
   date: timestamp("date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
