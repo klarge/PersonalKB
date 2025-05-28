@@ -34,6 +34,12 @@ export default function EntryPage() {
     enabled: isToday || (!!entryId && !isNaN(entryId)),
   });
 
+  // Query for backlinks - entries that reference this one
+  const { data: backlinks = [] } = useQuery<Entry[]>({
+    queryKey: ["/api/entries/backlinks", entry?.id],
+    enabled: !!entry?.id,
+  });
+
   // Update local state when entry data loads
   useEffect(() => {
     if (entry) {
@@ -549,6 +555,37 @@ export default function EntryPage() {
                     <Badge key={index} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Backlinks Section */}
+            {backlinks.length > 0 && (
+              <div className="border-t pt-4 mt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Connected Entries</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Other entries that reference this one:
+                </p>
+                <div className="space-y-3">
+                  {backlinks.map((linkedEntry) => (
+                    <Link key={linkedEntry.id} href={`/entry/${linkedEntry.id}`}>
+                      <div className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div className="flex items-center space-x-2 mb-1">
+                          {getEntryIcon(linkedEntry.type)}
+                          <h4 className="font-medium text-gray-900">{linkedEntry.title}</h4>
+                          <Badge variant="outline" className="text-xs">
+                            {linkedEntry.type}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {linkedEntry.content.slice(0, 150)}...
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(linkedEntry.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               </div>

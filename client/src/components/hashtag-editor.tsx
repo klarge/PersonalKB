@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Bold, Italic, Link2, Image, Upload } from "lucide-react";
+import { Bold, Italic, Link2, Image, Upload, List, ListOrdered } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -248,6 +248,22 @@ export default function HashtagEditor({ content, onChange, placeholder }: Hashta
           onClick={() => insertFormatting("[", "](url)")}
         >
           <Link2 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => insertFormatting("- ", "")}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => insertFormatting("1. ", "")}
+        >
+          <ListOrdered className="h-4 w-4" />
         </Button>
         <Button
           type="button"

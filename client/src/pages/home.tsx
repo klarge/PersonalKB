@@ -240,11 +240,10 @@ export default function Home() {
 interface EntryListProps {
   entries: Entry[];
   isLoading: boolean;
-  view: "list" | "grid";
   emptyMessage: string;
 }
 
-function EntryList({ entries, isLoading, view, emptyMessage }: EntryListProps) {
+function EntryList({ entries, isLoading, emptyMessage }: EntryListProps) {
   if (isLoading) {
     return (
       <div className="grid gap-4">
@@ -272,12 +271,8 @@ function EntryList({ entries, isLoading, view, emptyMessage }: EntryListProps) {
     );
   }
 
-  const gridClasses = view === "grid" 
-    ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-    : "space-y-4";
-
   return (
-    <div className={gridClasses}>
+    <div className="space-y-4">
       {entries.map((entry) => (
         <EntryCard key={entry.id} entry={entry} />
       ))}
