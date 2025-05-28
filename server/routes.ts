@@ -65,6 +65,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get backlinks for an entry (entries that reference this one)
+  app.get("/api/entries/backlinks/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const entryId = parseInt(req.params.id);
+      
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+
+      // Get the target entry to find its title
+      const targetEntry = await storage.getEntryById(entryId);
+      if (!targetEntry || targetEntry.userId !== userId) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+
+      // Find entries that contain hashtags referencing this entry's title
+      const backlinks = await storage.getBacklinksForEntry(userId, targetEntry.title);
+      
+      res.json(backlinks);
+    } catch (error) {
+      console.error("Error fetching backlinks:", error);
+      res.status(500).json({ message: "Failed to fetch backlinks" });
+    }
+  });
+
   // Today's journal route (must come before /:id route)
   app.get("/api/entries/today", isAuthenticated, async (req: any, res) => {
     try {

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen, User, MapPin, Package, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
@@ -37,6 +37,7 @@ export default function EntryPage() {
   // Query for backlinks - entries that reference this one
   const { data: backlinks = [] } = useQuery<Entry[]>({
     queryKey: ["/api/entries/backlinks", entry?.id],
+    queryFn: () => fetch(`/api/entries/backlinks/${entry?.id}`).then(res => res.json()),
     enabled: !!entry?.id,
   });
 
@@ -434,6 +435,21 @@ export default function EntryPage() {
         return "Document this item or concept... Use #hashtags to link ideas!";
       default:
         return "Start writing your journal entry... Use #hashtags to link your thoughts!";
+    }
+  };
+
+  const getEntryIcon = (type: string) => {
+    switch (type) {
+      case "note":
+        return <StickyNote className="h-4 w-4 text-yellow-500" />;
+      case "person":
+        return <User className="h-4 w-4 text-green-500" />;
+      case "place":
+        return <MapPin className="h-4 w-4 text-red-500" />;
+      case "thing":
+        return <Package className="h-4 w-4 text-purple-500" />;
+      default:
+        return <BookOpen className="h-4 w-4 text-blue-500" />;
     }
   };
 

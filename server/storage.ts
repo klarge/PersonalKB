@@ -30,6 +30,7 @@ export interface IStorage {
   deleteEntry(id: number): Promise<void>;
   searchEntries(userId: string, query: string, type?: "journal" | "note" | "person" | "place" | "thing"): Promise<Entry[]>;
   getAllEntriesForAutocomplete(userId: string): Promise<{ id: number; title: string; type: string }[]>;
+  getBacklinksForEntry(userId: string, entryTitle: string): Promise<Entry[]>;
   
   // Tag operations
   getOrCreateTag(name: string): Promise<Tag>;
@@ -176,6 +177,23 @@ export class DatabaseStorage implements IStorage {
       .from(entries)
       .where(eq(entries.userId, userId))
       .orderBy(desc(entries.updatedAt));
+  }
+
+  async getBacklinksForEntry(userId: string, entryTitle: string): Promise<Entry[]> {
+    // Find entries that contain hashtags referencing the given entry title
+    const hashtag = `#${entryTitle.replace(/\s+/g, '')}`;
+    
+    const backlinks = await db.select()
+      .from(entries)
+      .where(
+        and(
+          eq(entries.userId, userId),
+          like(entries.content, `%${hashtag}%`)
+        )
+      )
+      .orderBy(desc(entries.date));
+    
+    return backlinks;
   }
 
   // Tag operations
