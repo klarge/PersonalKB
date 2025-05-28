@@ -67,21 +67,19 @@ export default function Home() {
               <h1 className="text-xl font-semibold text-gray-900">Knowledge Hub</h1>
             </div>
             
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-2">
               <Link href="/entry/today">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Calendar className="h-4 w-4 mr-2 sm:mr-2" />
-                  <span className="hidden sm:inline">Today's Journal</span>
-                  <span className="sm:hidden">Today</span>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4">
+                  <Calendar className="h-4 w-4" />
+                  <span className="ml-2 hidden md:inline">Today's Journal</span>
                 </Button>
               </Link>
               
               <QuickNoteDialog
                 trigger={
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2 sm:mr-2" />
-                    <span className="hidden sm:inline">Quick Note</span>
-                    <span className="sm:hidden">Note</span>
+                  <Button variant="outline" className="px-3 md:px-4">
+                    <Plus className="h-4 w-4" />
+                    <span className="ml-2 hidden md:inline">Quick Note</span>
                   </Button>
                 }
               />
@@ -153,37 +151,41 @@ export default function Home() {
         </div>
 
         {/* View Controls and Tabs */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
           <Tabs defaultValue="all" className="w-full">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="all">All Entries</TabsTrigger>
-                <TabsTrigger value="journal">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Journal
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+              <TabsList className="grid w-full grid-cols-6 md:w-auto md:flex">
+                <TabsTrigger value="all" className="px-1 md:px-4 text-xs md:text-sm">
+                  <span className="hidden md:inline">All Entries</span>
+                  <span className="md:hidden">All</span>
                 </TabsTrigger>
-                <TabsTrigger value="notes">
-                  <Lightbulb className="h-4 w-4 mr-2" />
-                  Notes
+                <TabsTrigger value="journal" className="px-1 md:px-4 text-xs md:text-sm">
+                  <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="ml-1 hidden md:inline">Journal</span>
                 </TabsTrigger>
-                <TabsTrigger value="people">
-                  <User className="h-4 w-4 mr-2" />
-                  People
+                <TabsTrigger value="notes" className="px-1 md:px-4 text-xs md:text-sm">
+                  <Lightbulb className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="ml-1 hidden md:inline">Notes</span>
                 </TabsTrigger>
-                <TabsTrigger value="places">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Places
+                <TabsTrigger value="people" className="px-1 md:px-4 text-xs md:text-sm">
+                  <User className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="ml-1 hidden md:inline">People</span>
                 </TabsTrigger>
-                <TabsTrigger value="things">
-                  <Package className="h-4 w-4 mr-2" />
-                  Things
+                <TabsTrigger value="places" className="px-1 md:px-4 text-xs md:text-sm">
+                  <MapPin className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="ml-1 hidden md:inline">Places</span>
+                </TabsTrigger>
+                <TabsTrigger value="things" className="px-1 md:px-4 text-xs md:text-sm">
+                  <Package className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="ml-1 hidden md:inline">Things</span>
                 </TabsTrigger>
               </TabsList>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center space-x-2 md:justify-start">
                 <Button
                   variant={view === "list" ? "default" : "outline"}
                   size="sm"
+                  className="px-2"
                   onClick={() => setView("list")}
                 >
                   <List className="h-4 w-4" />
@@ -191,6 +193,7 @@ export default function Home() {
                 <Button
                   variant={view === "grid" ? "default" : "outline"}
                   size="sm"
+                  className="px-2"
                   onClick={() => setView("grid")}
                 >
                   <LayoutGrid className="h-4 w-4" />
