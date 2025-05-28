@@ -1,19 +1,11 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Lightbulb } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface QuickNoteDialogProps {
   trigger?: React.ReactNode;
@@ -24,6 +16,7 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
@@ -33,11 +26,10 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
     onSuccess: () => {
       toast({
         title: "Note created",
-        description: "Your quick note has been saved.",
+        description: "Your quick note has been saved successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/entries?type=note"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/entries?type=journal"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries", { type: "note" }] });
       setTitle("");
       setContent("");
       setOpen(false);
@@ -53,51 +45,44 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
-    
+    if (!title.trim() || !content.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please provide both a title and content for your note.",
+        variant: "destructive",
+      });
+      return;
+    }
     createNoteMutation.mutate({ title: title.trim(), content: content.trim() });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Quick Note</span>
-          </Button>
-        )}
+        {trigger || <Button>Quick Note</Button>}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Lightbulb className="h-5 w-5 text-yellow-500" />
-            <span>Quick Note</span>
-          </DialogTitle>
-          <DialogDescription>
-            Capture a quick thought, idea, or piece of information. Use hashtags to connect it to other notes.
-          </DialogDescription>
+          <DialogTitle>Create Quick Note</DialogTitle>
         </DialogHeader>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Input
+              type="text"
               placeholder="Note title..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              autoFocus
+              className="w-full"
             />
           </div>
-          
           <div>
             <Textarea
-              placeholder="What's on your mind? Use #hashtags to link to other notes..."
+              placeholder="Write your note here... Use #hashtags to connect ideas!"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={4}
+              className="w-full min-h-[120px] resize-none"
             />
           </div>
-          
           <div className="flex justify-end space-x-2">
             <Button
               type="button"
@@ -108,17 +93,12 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
             </Button>
             <Button
               type="submit"
-              disabled={!title.trim() || !content.trim() || createNoteMutation.isPending}
-              className="bg-primary hover:bg-blue-700"
+              disabled={createNoteMutation.isPending || !title.trim() || !content.trim()}
             >
-              {createNoteMutation.isPending ? "Saving..." : "Save Note"}
+              {createNoteMutation.isPending ? "Creating..." : "Create Note"}
             </Button>
           </div>
         </form>
-        
-        <div className="text-xs text-secondary">
-          <p><strong>Tip:</strong> Use hashtags like #person, #idea, or #project to create connections between your notes.</p>
-        </div>
       </DialogContent>
     </Dialog>
   );

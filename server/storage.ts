@@ -3,7 +3,6 @@ import {
   entries,
   tags,
   entryTags,
-  entryConnections,
   images,
   type User,
   type UpsertUser,
@@ -11,13 +10,11 @@ import {
   type InsertEntry,
   type Tag,
   type InsertTag,
-  type EntryTag,
-  type EntryConnection,
   type Image,
   type InsertImage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, ilike, sql } from "drizzle-orm";
+import { eq, and, desc, like, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -38,10 +35,7 @@ export interface IStorage {
   getTagsByEntry(entryId: number): Promise<Tag[]>;
   addTagToEntry(entryId: number, tagId: number): Promise<void>;
   removeTagFromEntry(entryId: number, tagId: number): Promise<void>;
-  
-  // Connection operations
-  createConnection(fromEntryId: number, toEntryId: number): Promise<void>;
-  getConnectionsByEntry(entryId: number): Promise<EntryConnection[]>;
+  processHashtags(entryId: number, content: string): Promise<void>;
   
   // Image operations
   createImage(image: InsertImage): Promise<Image>;
@@ -49,7 +43,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations
+  // User operations (mandatory for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -86,7 +80,7 @@ export class DatabaseStorage implements IStorage {
 
   async getEntryById(id: number): Promise<Entry | undefined> {
     if (!id || isNaN(id)) {
-      throw new Error(`Invalid entry ID: ${id}`);
+      return undefined;
     }
     const [entry] = await db.select().from(entries).where(eq(entries.id, id));
     return entry;
@@ -104,6 +98,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(entries.userId, userId),
+          eq(entries.type, "journal"),
           sql`${entries.date} >= ${startOfDay}`,
           sql`${entries.date} <= ${endOfDay}`
         )
@@ -112,16 +107,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEntry(entry: InsertEntry): Promise<Entry> {
-    const [newEntry] = await db.insert(entries).values(entry).returning();
+    const [newEntry] = await db
+      .insert(entries)
+      .values({
+        ...entry,
+        date: entry.date || new Date(),
+      })
+      .returning();
+    
+    // Process hashtags in content
+    await this.processHashtags(newEntry.id, entry.content);
+    
     return newEntry;
   }
 
   async updateEntry(id: number, entry: Partial<InsertEntry>): Promise<Entry> {
     const [updatedEntry] = await db
       .update(entries)
-      .set({ ...entry, updatedAt: new Date() })
+      .set({
+        ...entry,
+        updatedAt: new Date(),
+      })
       .where(eq(entries.id, id))
       .returning();
+    
+    // Process hashtags if content was updated
+    if (entry.content !== undefined) {
+      await this.processHashtags(id, entry.content);
+    }
+    
     return updatedEntry;
   }
 
@@ -133,8 +147,8 @@ export class DatabaseStorage implements IStorage {
     const conditions = [
       eq(entries.userId, userId),
       or(
-        ilike(entries.title, `%${query}%`),
-        ilike(entries.content, `%${query}%`)
+        like(entries.title, `%${query}%`),
+        like(entries.content, `%${query}%`)
       )
     ];
     
@@ -151,12 +165,24 @@ export class DatabaseStorage implements IStorage {
 
   // Tag operations
   async getOrCreateTag(name: string): Promise<Tag> {
-    const [existingTag] = await db.select().from(tags).where(eq(tags.name, name));
+    const cleanName = name.toLowerCase().replace(/^#/, '');
+    
+    // Try to find existing tag
+    const [existingTag] = await db
+      .select()
+      .from(tags)
+      .where(eq(tags.name, cleanName));
+    
     if (existingTag) {
       return existingTag;
     }
-
-    const [newTag] = await db.insert(tags).values({ name }).returning();
+    
+    // Create new tag
+    const [newTag] = await db
+      .insert(tags)
+      .values({ name: cleanName })
+      .returning();
+    
     return newTag;
   }
 
@@ -168,12 +194,20 @@ export class DatabaseStorage implements IStorage {
         createdAt: tags.createdAt,
       })
       .from(tags)
-      .innerJoin(entryTags, eq(tags.id, entryTags.tagId))
+      .innerJoin(entryTags, eq(entryTags.tagId, tags.id))
       .where(eq(entryTags.entryId, entryId));
   }
 
   async addTagToEntry(entryId: number, tagId: number): Promise<void> {
-    await db.insert(entryTags).values({ entryId, tagId });
+    // Check if relationship already exists
+    const [existing] = await db
+      .select()
+      .from(entryTags)
+      .where(and(eq(entryTags.entryId, entryId), eq(entryTags.tagId, tagId)));
+    
+    if (!existing) {
+      await db.insert(entryTags).values({ entryId, tagId });
+    }
   }
 
   async removeTagFromEntry(entryId: number, tagId: number): Promise<void> {
@@ -182,21 +216,20 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(entryTags.entryId, entryId), eq(entryTags.tagId, tagId)));
   }
 
-  // Connection operations
-  async createConnection(fromEntryId: number, toEntryId: number): Promise<void> {
-    await db.insert(entryConnections).values({ fromEntryId, toEntryId });
-  }
-
-  async getConnectionsByEntry(entryId: number): Promise<EntryConnection[]> {
-    return await db
-      .select()
-      .from(entryConnections)
-      .where(
-        or(
-          eq(entryConnections.fromEntryId, entryId),
-          eq(entryConnections.toEntryId, entryId)
-        )
-      );
+  async processHashtags(entryId: number, content: string): Promise<void> {
+    // Remove all existing tags for this entry
+    await db.delete(entryTags).where(eq(entryTags.entryId, entryId));
+    
+    // Extract hashtags from content
+    const hashtagRegex = /#[\w]+/g;
+    const hashtags = content.match(hashtagRegex) || [];
+    
+    // Process each unique hashtag
+    const uniqueHashtags = [...new Set(hashtags)];
+    for (const hashtag of uniqueHashtags) {
+      const tag = await this.getOrCreateTag(hashtag);
+      await this.addTagToEntry(entryId, tag.id);
+    }
   }
 
   // Image operations

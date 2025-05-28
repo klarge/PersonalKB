@@ -7,16 +7,15 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Setup multer for image uploads
 const upload = multer({
   dest: "uploads/",
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-
+    
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -29,19 +28,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Ensure uploads directory exists
-  if (!fs.existsSync("uploads")) {
-    fs.mkdirSync("uploads", { recursive: true });
-  }
-
-  // Serve uploaded images
-  app.use("/uploads", isAuthenticated, (req, res, next) => {
-    // Add security check to ensure user can only access their own images
-    next();
-  });
-
   // Auth routes
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -65,6 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Today's journal route (must come before /:id route)
   app.get("/api/entries/today", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -90,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get tags for this entry
-      const tags = entry?.id ? await storage.getTagsByEntry(entry.id) : [];
+      const tags = entry ? await storage.getTagsByEntry(entry.id) : [];
       
       res.json({ ...entry, tags });
     } catch (error) {
@@ -99,19 +88,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get specific entry by ID
   app.get("/api/entries/:id", isAuthenticated, async (req: any, res) => {
     try {
-      // Skip this route if the ID is "today" - should be handled by the specific route above
-      if (req.params.id === "today") {
-        return res.status(400).json({ message: "Use /api/entries/today endpoint" });
-      }
-      
       const entryId = parseInt(req.params.id);
-      if (isNaN(entryId) || !req.params.id) {
+      if (isNaN(entryId)) {
         return res.status(400).json({ message: "Invalid entry ID" });
       }
-      const entry = await storage.getEntryById(entryId);
       
+      const entry = await storage.getEntryById(entryId);
       if (!entry) {
         return res.status(404).json({ message: "Entry not found" });
       }
@@ -131,27 +116,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new entry
   app.post("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const entryData = insertEntrySchema.parse({
         ...req.body,
         userId,
-        type: req.body.type || "journal",
-        date: new Date(req.body.date || Date.now()),
       });
 
       const entry = await storage.createEntry(entryData);
-
-      // Process hashtags in content
-      const hashtagRegex = /#(\w+)/g;
-      const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
-      
-      for (const [, tagName] of hashtags) {
-        const tag = await storage.getOrCreateTag(tagName.toLowerCase());
-        await storage.addTagToEntry(entry.id, tag.id);
-      }
-
       res.json(entry);
     } catch (error) {
       console.error("Error creating entry:", error);
@@ -159,55 +133,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick note creation endpoint
+  app.post("/api/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, content } = req.body;
+
+      if (!title || !content) {
+        return res.status(400).json({ message: "Title and content are required" });
+      }
+
+      const entry = await storage.createEntry({
+        userId,
+        title,
+        content,
+        type: "note",
+        date: new Date(),
+      });
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating note:", error);
+      res.status(500).json({ message: "Failed to create note" });
+    }
+  });
+
+  // Update entry
   app.patch("/api/entries/:id", isAuthenticated, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
-      
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+
       // Check if entry exists and user owns it
       const existingEntry = await storage.getEntryById(entryId);
-      if (!existingEntry || existingEntry.userId !== userId) {
+      if (!existingEntry) {
         return res.status(404).json({ message: "Entry not found" });
       }
 
-      const entryData = insertEntrySchema.partial().parse(req.body);
-      const entry = await storage.updateEntry(entryId, entryData);
-
-      // Re-process hashtags if content was updated
-      if (entryData.content) {
-        // Remove existing tags (simplified approach)
-        // In production, you might want to be more selective
-        const existingTags = await storage.getTagsByEntry(entryId);
-        for (const tag of existingTags) {
-          await storage.removeTagFromEntry(entryId, tag.id);
-        }
-
-        // Add new tags
-        const hashtagRegex = /#(\w+)/g;
-        const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
-        
-        for (const [, tagName] of hashtags) {
-          const tag = await storage.getOrCreateTag(tagName.toLowerCase());
-          await storage.addTagToEntry(entryId, tag.id);
-        }
+      if (existingEntry.userId !== req.user.claims.sub) {
+        return res.status(403).json({ message: "Access denied" });
       }
 
-      res.json(entry);
+      const entryData = insertEntrySchema.partial().parse(req.body);
+      const updatedEntry = await storage.updateEntry(entryId, entryData);
+      
+      res.json(updatedEntry);
     } catch (error) {
       console.error("Error updating entry:", error);
       res.status(500).json({ message: "Failed to update entry" });
     }
   });
 
+  // Delete entry
   app.delete("/api/entries/:id", isAuthenticated, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
-      
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+
       // Check if entry exists and user owns it
       const existingEntry = await storage.getEntryById(entryId);
-      if (!existingEntry || existingEntry.userId !== userId) {
+      if (!existingEntry) {
         return res.status(404).json({ message: "Entry not found" });
+      }
+
+      if (existingEntry.userId !== req.user.claims.sub) {
+        return res.status(403).json({ message: "Access denied" });
       }
 
       await storage.deleteEntry(entryId);
@@ -218,51 +212,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quick note creation
-  app.post("/api/notes", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { title, content } = req.body;
-      
-      if (!title || !content) {
-        return res.status(400).json({ message: "Title and content are required" });
-      }
-
-      const entryData = insertEntrySchema.parse({
-        userId,
-        title,
-        content,
-        type: "note",
-        date: new Date(),
-      });
-
-      const entry = await storage.createEntry(entryData);
-
-      // Process hashtags in content
-      const hashtagRegex = /#(\w+)/g;
-      const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
-      
-      for (const [, tagName] of hashtags) {
-        const tag = await storage.getOrCreateTag(tagName.toLowerCase());
-        await storage.addTagToEntry(entry.id, tag.id);
-      }
-
-      res.json(entry);
-    } catch (error) {
-      console.error("Error creating note:", error);
-      res.status(500).json({ message: "Failed to create note" });
-    }
-  });
-
-  // Search routes
+  // Search entries
   app.get("/api/search", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const query = req.query.q as string;
       const type = req.query.type as "journal" | "note" | undefined;
-      
+
       if (!query) {
-        return res.json([]);
+        return res.status(400).json({ message: "Search query is required" });
       }
 
       const entries = await storage.searchEntries(userId, query, type);
@@ -274,28 +232,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload
-  app.post("/api/images", isAuthenticated, upload.single("image"), async (req: any, res) => {
+  app.post("/api/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: "No image file provided" });
+        return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const userId = req.user.claims.sub;
       const entryId = req.body.entryId ? parseInt(req.body.entryId) : null;
-
+      
+      // Save image record to database
       const image = await storage.createImage({
-        userId,
-        entryId,
-        filename: req.file.originalname,
-        path: req.file.path,
+        entryId: entryId || 0, // Default to 0 if no entry ID provided
+        filename: req.file.filename,
+        originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
       });
 
       res.json({
         id: image.id,
-        url: `/uploads/${path.basename(req.file.path)}`,
         filename: image.filename,
+        originalName: image.originalName,
+        url: `/uploads/${image.filename}`,
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -303,27 +261,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mindmap data
-  app.get("/api/mindmap", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const entries = await storage.getEntriesByUser(userId);
-      
-      // Build nodes and edges for mindmap
-      const nodes = entries.map(entry => ({
-        id: entry.id.toString(),
-        label: entry.title,
-        date: entry.date,
-      }));
+  // Serve uploaded images
+  app.get("/uploads/:filename", (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join("uploads", filename);
+    
+    if (fs.existsSync(filepath)) {
+      res.sendFile(path.resolve(filepath));
+    } else {
+      res.status(404).json({ message: "File not found" });
+    }
+  });
 
-      // For now, create connections based on shared tags
-      // In a more sophisticated implementation, you could analyze content for references
-      const edges: { from: string; to: string }[] = [];
-      
-      res.json({ nodes, edges });
+  // Get tags for an entry
+  app.get("/api/entries/:id/tags", isAuthenticated, async (req: any, res) => {
+    try {
+      const entryId = parseInt(req.params.id);
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+
+      const tags = await storage.getTagsByEntry(entryId);
+      res.json(tags);
     } catch (error) {
-      console.error("Error fetching mindmap data:", error);
-      res.status(500).json({ message: "Failed to fetch mindmap data" });
+      console.error("Error fetching tags:", error);
+      res.status(500).json({ message: "Failed to fetch tags" });
     }
   });
 
