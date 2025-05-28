@@ -212,17 +212,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick note creation
+  app.post("/api/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, content } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ message: "Title and content are required" });
+      }
+
+      const entryData = insertEntrySchema.parse({
+        userId,
+        title,
+        content,
+        type: "note",
+        date: new Date(),
+      });
+
+      const entry = await storage.createEntry(entryData);
+
+      // Process hashtags in content
+      const hashtagRegex = /#(\w+)/g;
+      const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
+      
+      for (const [, tagName] of hashtags) {
+        const tag = await storage.getOrCreateTag(tagName.toLowerCase());
+        await storage.addTagToEntry(entry.id, tag.id);
+      }
+
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating note:", error);
+      res.status(500).json({ message: "Failed to create note" });
+    }
+  });
+
   // Search routes
   app.get("/api/search", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const query = req.query.q as string;
+      const type = req.query.type as "journal" | "note" | undefined;
       
       if (!query) {
         return res.json([]);
       }
 
-      const entries = await storage.searchEntries(userId, query);
+      const entries = await storage.searchEntries(userId, query, type);
       res.json(entries);
     } catch (error) {
       console.error("Error searching entries:", error);

@@ -1,4 +1,4 @@
-import { Link2 } from "lucide-react";
+import { Link2, BookOpen, Lightbulb } from "lucide-react";
 import type { Entry } from "@shared/schema";
 
 interface EntryCardProps {
@@ -44,6 +44,7 @@ export default function EntryCard({ entry, searchQuery }: EntryCardProps) {
   const hashtags = extractHashtags(entry.content);
   const readTime = getReadTime(entry.content);
   const connectionCount = getConnectionCount(entry.content);
+  const isNote = entry.type === "note";
 
   const handleClick = () => {
     window.location.href = `/entry/${entry.id}`;
@@ -56,10 +57,26 @@ export default function EntryCard({ entry, searchQuery }: EntryCardProps) {
     >
       <div className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <h5 className="font-medium text-dark">
-            {highlightText(entry.title, searchQuery)}
-          </h5>
-          <span className="text-xs text-secondary">{readTime}</span>
+          <div className="flex items-center space-x-2">
+            {isNote ? (
+              <Lightbulb className="h-4 w-4 text-yellow-500" />
+            ) : (
+              <BookOpen className="h-4 w-4 text-primary" />
+            )}
+            <h5 className="font-medium text-dark">
+              {highlightText(entry.title, searchQuery)}
+            </h5>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+              isNote 
+                ? "bg-yellow-100 text-yellow-700" 
+                : "bg-blue-100 text-blue-700"
+            }`}>
+              {isNote ? "Note" : "Journal"}
+            </span>
+            <span className="text-xs text-secondary">{readTime}</span>
+          </div>
         </div>
         
         <p className="text-secondary text-sm line-clamp-2 mb-3">

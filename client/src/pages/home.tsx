@@ -2,28 +2,45 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Download, Grid } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus, Download, Grid, BookOpen, Lightbulb } from "lucide-react";
 import Sidebar from "@/components/sidebar";
 import MobileNav from "@/components/mobile-nav";
 import EntryCard from "@/components/entry-card";
+import QuickNoteDialog from "@/components/quick-note-dialog";
 import type { Entry } from "@shared/schema";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
+  const [activeTab, setActiveTab] = useState("all");
 
-  const { data: entries = [], isLoading } = useQuery<Entry[]>({
+  const { data: allEntries = [], isLoading } = useQuery<Entry[]>({
     queryKey: ["/api/entries"],
+  });
+
+  const { data: journalEntries = [] } = useQuery<Entry[]>({
+    queryKey: ["/api/entries", { type: "journal" }],
+  });
+
+  const { data: notes = [] } = useQuery<Entry[]>({
+    queryKey: ["/api/entries", { type: "note" }],
   });
 
   const { data: todayEntry } = useQuery({
     queryKey: ["/api/entries/today"],
   });
 
-  const filteredEntries = entries.filter(entry =>
-    entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entry.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getFilteredEntries = () => {
+    let entries = allEntries;
+    if (activeTab === "journal") entries = journalEntries;
+    if (activeTab === "notes") entries = notes;
+    
+    return entries.filter(entry =>
+      entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
 
   const handleCreateTodayEntry = async () => {
     if (todayEntry) {
@@ -85,12 +102,13 @@ export default function Home() {
         <div className="flex-1 overflow-auto">
           <div className="max-w-4xl mx-auto p-6">
             {/* Today's Entry Card */}
-            {todayEntry && (
+            {todayEntry && "id" in todayEntry && (
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <h3 className="text-lg font-semibold text-dark">Today's Entry</h3>
+                      <BookOpen className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold text-dark">Today's Journal</h3>
                       <span className="text-sm text-secondary">
                         {new Date().toLocaleDateString("en-US", {
                           month: "long",
@@ -106,16 +124,16 @@ export default function Home() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.location.href = `/entry/${todayEntry.id}`}
+                        onClick={() => window.location.href = `/entry/${(todayEntry as any).id}`}
                       >
                         Edit
                       </Button>
                     </div>
                   </div>
                   
-                  {todayEntry.content ? (
+                  {"content" in todayEntry && todayEntry.content ? (
                     <div className="prose prose-sm max-w-none">
-                      <p className="text-dark line-clamp-3">{todayEntry.content}</p>
+                      <p className="text-dark line-clamp-3">{todayEntry.content as string}</p>
                     </div>
                   ) : (
                     <p className="text-secondary italic">Start writing your thoughts for today...</p>
@@ -127,44 +145,101 @@ export default function Home() {
             {/* Quick Actions */}
             <div className="flex gap-4 mb-6">
               <Button onClick={handleCreateTodayEntry} className="bg-primary hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Today's Entry
+                <BookOpen className="h-4 w-4 mr-2" />
+                Today's Journal
               </Button>
+              
+              <QuickNoteDialog 
+                trigger={
+                  <Button variant="outline" className="flex items-center space-x-2">
+                    <Lightbulb className="h-4 w-4" />
+                    <span>Quick Note</span>
+                  </Button>
+                }
+              />
             </div>
 
-            {/* Recent Entries */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-dark">Recent Entries</h4>
-              
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
-                      <div className="animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredEntries.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-                  <p className="text-secondary">No entries found. Start writing your first entry!</p>
-                </div>
-              ) : (
-                <div className={view === "grid" ? "grid md:grid-cols-2 gap-4" : "space-y-4"}>
-                  {filteredEntries.map((entry) => (
-                    <EntryCard key={entry.id} entry={entry} />
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Content Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">All ({allEntries.length})</TabsTrigger>
+                <TabsTrigger value="journal">Journal ({journalEntries.length})</TabsTrigger>
+                <TabsTrigger value="notes">Notes ({notes.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="space-y-4">
+                <EntryList 
+                  entries={getFilteredEntries()} 
+                  isLoading={isLoading} 
+                  view={view}
+                  emptyMessage="No entries found. Start with a journal entry or quick note!"
+                />
+              </TabsContent>
+
+              <TabsContent value="journal" className="space-y-4">
+                <EntryList 
+                  entries={getFilteredEntries()} 
+                  isLoading={isLoading} 
+                  view={view}
+                  emptyMessage="No journal entries yet. Start writing your thoughts!"
+                />
+              </TabsContent>
+
+              <TabsContent value="notes" className="space-y-4">
+                <EntryList 
+                  entries={getFilteredEntries()} 
+                  isLoading={isLoading} 
+                  view={view}
+                  emptyMessage="No notes yet. Capture quick thoughts and ideas!"
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
 
       <MobileNav />
+    </div>
+  );
+}
+
+interface EntryListProps {
+  entries: Entry[];
+  isLoading: boolean;
+  view: "list" | "grid";
+  emptyMessage: string;
+}
+
+function EntryList({ entries, isLoading, view, emptyMessage }: EntryListProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <p className="text-secondary">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={view === "grid" ? "grid md:grid-cols-2 gap-4" : "space-y-4"}>
+      {entries.map((entry) => (
+        <EntryCard key={entry.id} entry={entry} />
+      ))}
     </div>
   );
 }
