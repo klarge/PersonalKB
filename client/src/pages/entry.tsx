@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Save, Calendar, Lightbulb, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Sidebar from "@/components/sidebar";
-import MobileNav from "@/components/mobile-nav";
-import RichTextEditor from "@/components/rich-text-editor";
+import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import type { Entry } from "@shared/schema";
 
 export default function EntryPage() {
@@ -16,28 +16,29 @@ export default function EntryPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const entryId = params?.id === "today" ? "today" : parseInt(params?.id || "0");
-  const isToday = entryId === "today";
+  const isToday = params?.id === "today";
+  const entryId = isToday ? null : parseInt(params?.id || "0");
 
+  // Query for entry data
   const { data: entry, isLoading } = useQuery<Entry & { tags?: any[] }>({
     queryKey: isToday ? ["/api/entries/today"] : ["/api/entries", entryId],
-    queryFn: isToday 
-      ? () => fetch("/api/entries/today").then(res => res.json())
-      : undefined,
-    enabled: !!entryId,
+    enabled: isToday || (!!entryId && !isNaN(entryId)),
   });
 
+  // Update local state when entry data loads
   useEffect(() => {
     if (entry) {
-      setTitle(entry.title);
-      setContent(entry.content);
+      setTitle(entry.title || "");
+      setContent(entry.content || "");
     }
   }, [entry]);
 
+  // Mutation for updating entry
   const updateMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
-      if (!entry?.id) throw new Error("Entry not found or invalid ID");
+      if (!entry?.id) throw new Error("Entry not found");
       
       const response = await apiRequest("PATCH", `/api/entries/${entry.id}`, data);
       return response.json();
@@ -45,12 +46,14 @@ export default function EntryPage() {
     onSuccess: () => {
       toast({
         title: "Entry saved",
-        description: "Your entry has been successfully saved.",
+        description: "Your changes have been saved successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/entries/today"] });
+      if (isToday) {
+        queryClient.invalidateQueries({ queryKey: ["/api/entries/today"] });
+      }
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to save entry. Please try again.",
@@ -59,158 +62,158 @@ export default function EntryPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      if (!entry) throw new Error("Entry not found");
-      
-      await apiRequest("DELETE", `/api/entries/${entry.id}`);
-    },
-    onSuccess: () => {
+  const handleSave = () => {
+    if (!title.trim()) {
       toast({
-        title: "Entry deleted",
-        description: "Your entry has been successfully deleted.",
-      });
-      window.location.href = "/";
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete entry. Please try again.",
+        title: "Missing title",
+        description: "Please provide a title for your entry.",
         variant: "destructive",
       });
-    },
-  });
-
-  const handleSave = () => {
-    updateMutation.mutate({ title, content });
-  };
-
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this entry?")) {
-      deleteMutation.mutate();
+      return;
     }
+    updateMutation.mutate({ title: title.trim(), content: content.trim() });
   };
+
+  // Extract hashtags from content
+  const hashtags = content.match(/#[\w]+/g) || [];
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex bg-neutral">
-        <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-secondary">Loading entry...</div>
-        </main>
-        <MobileNav />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading entry...</p>
+        </div>
       </div>
     );
   }
 
-  if (!entry) {
+  if (!isToday && (!entry || !entryId)) {
     return (
-      <div className="min-h-screen flex bg-neutral">
-        <Sidebar />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-dark mb-2">Entry not found</h2>
-            <p className="text-secondary">The entry you're looking for doesn't exist.</p>
-            <Button 
-              className="mt-4" 
-              onClick={() => window.location.href = "/"}
-            >
-              Back to Home
-            </Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <BookOpen className="h-8 w-8 text-gray-400" />
           </div>
-        </main>
-        <MobileNav />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Entry not found</h2>
+          <p className="text-gray-600 mb-4">The entry you're looking for doesn't exist.</p>
+          <Link href="/">
+            <Button>Back to Home</Button>
+          </Link>
+        </div>
       </div>
     );
   }
+
+  const isNote = entry?.type === "note";
 
   return (
-    <div className="min-h-screen flex bg-neutral">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.location.href = "/"}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              <Link href="/">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+              
+              <div className="flex items-center space-x-2">
+                {isNote ? (
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <BookOpen className="h-5 w-5 text-blue-500" />
+                )}
+                <Badge variant={isNote ? "secondary" : "default"}>
+                  {isNote ? "Note" : "Journal"}
+                </Badge>
+                {isToday && (
+                  <Badge variant="outline">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Today
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleSave}
+              disabled={updateMutation.isPending || !title.trim()}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {updateMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg border shadow-sm">
+          <div className="p-6">
+            {/* Title Input */}
+            <div className="mb-6">
               <Input
                 type="text"
+                placeholder={isNote ? "Note title..." : "Journal entry title..."}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-lg font-semibold border-none bg-transparent p-0 focus-visible:ring-0"
-                placeholder="Entry title..."
+                className="text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400"
               />
             </div>
             
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-secondary">
-                {new Date(entry.date).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDelete}
-                className="text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={updateMutation.isPending}
-                className="bg-primary hover:bg-blue-700"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {updateMutation.isPending ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        {/* Editor */}
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-6">
-                <RichTextEditor
-                  content={content}
-                  onChange={setContent}
-                  placeholder="Start writing your thoughts..."
-                />
+            {/* Entry Metadata */}
+            {entry && (
+              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-6 pb-4 border-b">
+                <span>
+                  Created: {new Date(entry.createdAt || entry.date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+                {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+                  <span>
+                    Updated: {new Date(entry.updatedAt).toLocaleDateString()}
+                  </span>
+                )}
               </div>
+            )}
+            
+            {/* Content Textarea */}
+            <div className="mb-6">
+              <Textarea
+                placeholder={isNote 
+                  ? "Write your note here... Use #hashtags to connect related ideas!" 
+                  : "Start writing your journal entry... Use #hashtags to link your thoughts!"
+                }
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="min-h-[400px] border-none px-0 focus:ring-0 resize-none text-base leading-relaxed"
+              />
             </div>
-
-            {/* Tags Display */}
-            {entry.tags && entry.tags.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-dark mb-3">Tags</h4>
+            
+            {/* Hashtags Display */}
+            {hashtags.length > 0 && (
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Connected Ideas</h3>
                 <div className="flex flex-wrap gap-2">
-                  {entry.tags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full cursor-pointer hover:bg-blue-200 transition-colors"
-                    >
-                      #{tag.name}
-                    </span>
+                  {hashtags.map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
           </div>
         </div>
-      </main>
-
-      <MobileNav />
+      </div>
     </div>
   );
 }
