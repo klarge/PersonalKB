@@ -3,58 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --background: 248 250 252; /* #F8FAFC - neutral */
-  --foreground: 30 41 59; /* #1E293B - dark */
-  --muted: 248 250 252; /* #F8FAFC */
-  --muted-foreground: 100 116 139; /* #64748B - secondary */
-  --popover: 255 255 255; /* #FFFFFF */
-  --popover-foreground: 30 41 59; /* #1E293B */
-  --card: 255 255 255; /* #FFFFFF */
-  --card-foreground: 30 41 59; /* #1E293B */
-  --border: 226 232 240; /* #E2E8F0 */
-  --input: 226 232 240; /* #E2E8F0 */
-  --primary: 37 99 235; /* #2563EB - primary blue */
-  --primary-foreground: 248 250 252; /* #F8FAFC */
-  --secondary: 248 250 252; /* #F8FAFC */
-  --secondary-foreground: 15 23 42; /* #0F172A */
-  --accent: 16 185 129; /* #10B981 - accent green */
-  --accent-foreground: 255 255 255; /* #FFFFFF */
-  --destructive: 239 68 68; /* #EF4444 */
-  --destructive-foreground: 255 255 255; /* #FFFFFF */
-  --ring: 37 99 235; /* #2563EB */
+  --background: 0 0% 100%; /* #FFFFFF */
+  --foreground: 222.2 84% 4.9%; /* #020817 */
+  --muted: 210 40% 98%; /* #F8FAFC */
+  --muted-foreground: 215.4 16.3% 46.9%; /* #64748B */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 222.2 84% 4.9%; /* #020817 */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 222.2 84% 4.9%; /* #020817 */
+  --border: 214.3 31.8% 91.4%; /* #E2E8F0 */
+  --input: 214.3 31.8% 91.4%; /* #E2E8F0 */
+  --primary: 221.2 83.2% 53.3%; /* #2563EB */
+  --primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --secondary: 210 40% 98%; /* #F8FAFC */
+  --secondary-foreground: 222.2 47.4% 11.2%; /* #0F172A */
+  --accent: 210 40% 98%; /* #F8FAFC */
+  --accent-foreground: 222.2 47.4% 11.2%; /* #0F172A */
+  --destructive: 0 84.2% 60.2%; /* #EF4444 */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC */
+  --ring: 221.2 83.2% 53.3%; /* #2563EB */
   --radius: 0.5rem;
 
   /* Custom colors matching design */
-  --neutral: 248 250 252; /* #F8FAFC */
-  --dark: 30 41 59; /* #1E293B */
-  --secondary-text: 100 116 139; /* #64748B */
+  --neutral: 210 40% 98%; /* #F8FAFC */
+  --dark: 222.2 47.4% 11.2%; /* #1E293B */
+  --secondary-text: 215.4 16.3% 46.9%; /* #64748B */
 }
 
 .dark {
-  --background: 15 23 42; /* #0F172A */
-  --foreground: 248 250 252; /* #F8FAFC */
-  --muted: 30 41 59; /* #1E293B */
-  --muted-foreground: 148 163 184; /* #94A3B8 */
-  --popover: 15 23 42; /* #0F172A */
-  --popover-foreground: 248 250 252; /* #F8FAFC */
-  --card: 15 23 42; /* #0F172A */
-  --card-foreground: 248 250 252; /* #F8FAFC */
-  --border: 30 41 59; /* #1E293B */
-  --input: 30 41 59; /* #1E293B */
-  --primary: 37 99 235; /* #2563EB */
-  --primary-foreground: 248 250 252; /* #F8FAFC */
-  --secondary: 30 41 59; /* #1E293B */
-  --secondary-foreground: 248 250 252; /* #F8FAFC */
-  --accent: 16 185 129; /* #10B981 */
-  --accent-foreground: 15 23 42; /* #0F172A */
-  --destructive: 239 68 68; /* #EF4444 */
-  --destructive-foreground: 248 250 252; /* #F8FAFC */
-  --ring: 37 99 235; /* #2563EB */
+  --background: 222.2 84% 4.9%; /* #020817 */
+  --foreground: 210 40% 98%; /* #F8FAFC */
+  --muted: 222.2 84% 4.9%; /* #020817 */
+  --muted-foreground: 215 20.2% 65.1%; /* #94A3B8 */
+  --popover: 222.2 84% 4.9%; /* #020817 */
+  --popover-foreground: 210 40% 98%; /* #F8FAFC */
+  --card: 222.2 84% 4.9%; /* #020817 */
+  --card-foreground: 210 40% 98%; /* #F8FAFC */
+  --border: 217.2 32.6% 17.5%; /* #1E293B */
+  --input: 217.2 32.6% 17.5%; /* #1E293B */
+  --primary: 221.2 83.2% 53.3%; /* #2563EB */
+  --primary-foreground: 210 40% 98%; /* #F8FAFC */
+  --secondary: 217.2 32.6% 17.5%; /* #1E293B */
+  --secondary-foreground: 210 40% 98%; /* #F8FAFC */
+  --accent: 217.2 32.6% 17.5%; /* #1E293B */
+  --accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --destructive: 0 62.8% 30.6%; /* #EF4444 */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC */
+  --ring: 221.2 83.2% 53.3%; /* #2563EB */
 
   /* Custom colors for dark mode */
-  --neutral: 15 23 42; /* #0F172A */
-  --dark: 248 250 252; /* #F8FAFC */
-  --secondary-text: 148 163 184; /* #94A3B8 */
+  --neutral: 222.2 84% 4.9%; /* #020817 */
+  --dark: 210 40% 98%; /* #F8FAFC */
+  --secondary-text: 215 20.2% 65.1%; /* #94A3B8 */
 }
 
 @layer base {

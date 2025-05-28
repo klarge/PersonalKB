@@ -133,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process hashtags in content
       const hashtagRegex = /#(\w+)/g;
-      const hashtags = [...entryData.content.matchAll(hashtagRegex)];
+      const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
       
       for (const [, tagName] of hashtags) {
         const tag = await storage.getOrCreateTag(tagName.toLowerCase());
@@ -172,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Add new tags
         const hashtagRegex = /#(\w+)/g;
-        const hashtags = [...entryData.content.matchAll(hashtagRegex)];
+        const hashtags = Array.from(entryData.content.matchAll(hashtagRegex));
         
         for (const [, tagName] of hashtags) {
           const tag = await storage.getOrCreateTag(tagName.toLowerCase());
