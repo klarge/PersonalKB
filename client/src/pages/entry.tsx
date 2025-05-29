@@ -158,6 +158,8 @@ export default function EntryPage() {
                 value={structuredData.name || ""}
                 onChange={(e) => updateStructuredField("name", e.target.value)}
                 placeholder="Enter full name"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -167,6 +169,8 @@ export default function EntryPage() {
                 type="date"
                 value={structuredData.dateOfBirth || ""}
                 onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -176,6 +180,8 @@ export default function EntryPage() {
                 value={structuredData.phone || ""}
                 onChange={(e) => updateStructuredField("phone", e.target.value)}
                 placeholder="Phone number"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -186,6 +192,8 @@ export default function EntryPage() {
                 value={structuredData.email || ""}
                 onChange={(e) => updateStructuredField("email", e.target.value)}
                 placeholder="Email address"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div className="col-span-2">
@@ -195,6 +203,8 @@ export default function EntryPage() {
                 value={structuredData.address || ""}
                 onChange={(e) => updateStructuredField("address", e.target.value)}
                 placeholder="Home address"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -204,6 +214,8 @@ export default function EntryPage() {
                 value={structuredData.occupation || ""}
                 onChange={(e) => updateStructuredField("occupation", e.target.value)}
                 placeholder="Job title/profession"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -213,6 +225,8 @@ export default function EntryPage() {
                 value={structuredData.company || ""}
                 onChange={(e) => updateStructuredField("company", e.target.value)}
                 placeholder="Company name"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
           </div>
@@ -228,6 +242,8 @@ export default function EntryPage() {
                 value={structuredData.address || ""}
                 onChange={(e) => updateStructuredField("address", e.target.value)}
                 placeholder="Full address"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -237,6 +253,8 @@ export default function EntryPage() {
                 value={structuredData.category || ""}
                 onChange={(e) => updateStructuredField("category", e.target.value)}
                 placeholder="e.g., Restaurant, Park, Office"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
@@ -247,6 +265,8 @@ export default function EntryPage() {
                 value={structuredData.website || ""}
                 onChange={(e) => updateStructuredField("website", e.target.value)}
                 placeholder="Website URL"
+                readOnly={!isEditing}
+                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
               />
             </div>
             <div>
