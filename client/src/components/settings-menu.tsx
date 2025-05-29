@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network } from "lucide-react";
+import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network, Key } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
 
@@ -66,6 +66,13 @@ export default function SettingsMenu() {
           <Download className="h-4 w-4 mr-2" />
           Export All Entries
         </DropdownMenuItem>
+        
+        <Link href="/api-tokens">
+          <DropdownMenuItem>
+            <Key className="h-4 w-4 mr-2" />
+            API Tokens
+          </DropdownMenuItem>
+        </Link>
         
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="flex items-center">
