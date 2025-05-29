@@ -52,19 +52,12 @@ export default function EntryPage() {
     enabled: !!entry?.id,
   });
 
-  // Update local state when entry data loads
+  // Set edit mode based on entry status
   useEffect(() => {
-    if (entry) {
-      setTitle(entry.title || "");
-      setContent(entry.content || "");
-      setStructuredData(entry.structuredData || {});
-      // Existing entries default to view mode
-      setIsEditing(false);
-    } else if (isToday || !entryId) {
-      // New entries and today's journal default to edit mode
+    if (isToday) {
+      // Today's journal - always start in edit mode
       setIsEditing(true);
-      if (isToday) {
-        // Auto-set title for today's journal
+      if (!entry) {
         const today = new Date().toLocaleDateString('en-US', { 
           weekday: 'long', 
           year: 'numeric', 
@@ -73,8 +66,23 @@ export default function EntryPage() {
         });
         setTitle(today);
       }
+    } else if (entry) {
+      // Existing entry - start in view mode
+      setIsEditing(false);
+    } else if (entryId && !isLoading && error) {
+      // New entry (ID exists but entry not found) - start in edit mode
+      setIsEditing(true);
     }
-  }, [entry, isToday, entryId]);
+  }, [entry, isToday, entryId, isLoading, error]);
+
+  // Update local state when entry data loads
+  useEffect(() => {
+    if (entry) {
+      setTitle(entry.title || "");
+      setContent(entry.content || "");
+      setStructuredData(entry.structuredData || {});
+    }
+  }, [entry]);
 
   // Mutation for updating entry
   const updateMutation = useMutation({
