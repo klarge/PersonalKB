@@ -1,0 +1,8 @@
+{
+  "appId": "com.personalkb.app",
+  "appName": "Personal KB",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
