@@ -45,7 +45,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
-      const entries = await storage.getEntriesByUser(userId, type);
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const entries = await storage.getEntriesByUser(userId, type, limit, offset);
       res.json(entries);
     } catch (error) {
       console.error("Error fetching entries:", error);

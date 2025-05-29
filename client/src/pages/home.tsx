@@ -19,31 +19,32 @@ export default function Home() {
 
   const { data: allEntries = [], isLoading: isLoadingAll } = useQuery<Entry[]>({
     queryKey: ["/api/entries"],
+    queryFn: () => fetch("/api/entries?limit=20").then(res => res.json()),
   });
 
   const { data: journalEntries = [], isLoading: isLoadingJournal } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "journal" }],
-    queryFn: () => fetch("/api/entries?type=journal").then(res => res.json()),
+    queryFn: () => fetch("/api/entries?type=journal&limit=20").then(res => res.json()),
   });
 
   const { data: noteEntries = [], isLoading: isLoadingNotes } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "note" }],
-    queryFn: () => fetch("/api/entries?type=note").then(res => res.json()),
+    queryFn: () => fetch("/api/entries?type=note&limit=20").then(res => res.json()),
   });
 
   const { data: peopleEntries = [], isLoading: isLoadingPeople } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "person" }],
-    queryFn: () => fetch("/api/entries?type=person").then(res => res.json()),
+    queryFn: () => fetch("/api/entries?type=person&limit=20").then(res => res.json()),
   });
 
   const { data: placeEntries = [], isLoading: isLoadingPlaces } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "place" }],
-    queryFn: () => fetch("/api/entries?type=place").then(res => res.json()),
+    queryFn: () => fetch("/api/entries?type=place&limit=20").then(res => res.json()),
   });
 
   const { data: thingEntries = [], isLoading: isLoadingThings } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "thing" }],
-    queryFn: () => fetch("/api/entries?type=thing").then(res => res.json()),
+    queryFn: () => fetch("/api/entries?type=thing&limit=20").then(res => res.json()),
   });
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery<Entry[]>({
@@ -213,9 +214,45 @@ interface EntryListProps {
   entries: Entry[];
   isLoading: boolean;
   emptyMessage: string;
+  type?: "journal" | "note" | "person" | "place" | "thing";
 }
 
-function EntryList({ entries, isLoading, emptyMessage }: EntryListProps) {
+function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
+  const [allEntries, setAllEntries] = useState<Entry[]>(entries);
+  const [offset, setOffset] = useState(20);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(entries.length === 20);
+
+  const loadMore = async () => {
+    setIsLoadingMore(true);
+    try {
+      const url = type 
+        ? `/api/entries?type=${type}&limit=20&offset=${offset}`
+        : `/api/entries?limit=20&offset=${offset}`;
+      
+      const response = await fetch(url);
+      const newEntries = await response.json();
+      
+      if (newEntries.length < 20) {
+        setHasMore(false);
+      }
+      
+      setAllEntries(prev => [...prev, ...newEntries]);
+      setOffset(prev => prev + 20);
+    } catch (error) {
+      console.error("Failed to load more entries:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Update entries when prop changes
+  useState(() => {
+    setAllEntries(entries);
+    setOffset(20);
+    setHasMore(entries.length === 20);
+  }, [entries]);
+
   if (isLoading) {
     return (
       <div className="grid gap-4">
@@ -231,7 +268,7 @@ function EntryList({ entries, isLoading, emptyMessage }: EntryListProps) {
     );
   }
 
-  if (entries.length === 0) {
+  if (allEntries.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -245,9 +282,22 @@ function EntryList({ entries, isLoading, emptyMessage }: EntryListProps) {
 
   return (
     <div className="space-y-4">
-      {entries.map((entry) => (
+      {allEntries.map((entry) => (
         <EntryCard key={entry.id} entry={entry} />
       ))}
+      
+      {hasMore && (
+        <div className="text-center pt-4">
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            disabled={isLoadingMore}
+            className="w-full"
+          >
+            {isLoadingMore ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

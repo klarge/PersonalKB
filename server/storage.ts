@@ -22,7 +22,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   
   // Entry operations
-  getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing"): Promise<Entry[]>;
+  getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing", limit?: number, offset?: number): Promise<Entry[]>;
   getEntryById(id: number): Promise<Entry | undefined>;
   getEntryByDate(userId: string, date: Date): Promise<Entry | undefined>;
   createEntry(entry: InsertEntry): Promise<Entry>;
@@ -67,7 +67,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Entry operations
-  async getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing"): Promise<Entry[]> {
+  async getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing", limit: number = 20, offset: number = 0): Promise<Entry[]> {
     const conditions = [eq(entries.userId, userId)];
     if (type) {
       conditions.push(eq(entries.type, type));
@@ -77,7 +77,9 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(entries)
       .where(and(...conditions))
-      .orderBy(desc(entries.date));
+      .orderBy(desc(entries.date))
+      .limit(limit)
+      .offset(offset);
   }
 
   async getEntryById(id: number): Promise<Entry | undefined> {
