@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb } from "lucide-react";
+import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
@@ -19,6 +19,7 @@ export default function EntryPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [structuredData, setStructuredData] = useState<any>({});
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -521,6 +522,15 @@ export default function EntryPage() {
             </div>
             
             <div className="flex items-center space-x-2">
+              <Button 
+                onClick={() => setIsEditing(!isEditing)}
+                variant="outline"
+                size="sm"
+              >
+                {isEditing ? <Eye className="h-4 w-4 mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
+                {isEditing ? "View" : "Edit"}
+              </Button>
+              
               {!isToday && (
                 <Button 
                   onClick={handleDelete}
@@ -533,14 +543,16 @@ export default function EntryPage() {
                 </Button>
               )}
               
-              <Button 
-                onClick={handleSave}
-                disabled={updateMutation.isPending || !title.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {updateMutation.isPending ? "Saving..." : "Save"}
-              </Button>
+              {isEditing && (
+                <Button 
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending || !title.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -588,17 +600,24 @@ export default function EntryPage() {
               </div>
             )}
 
-            {/* Content Editor with Hashtag Support */}
+            {/* Content Editor/Viewer with Hashtag Support */}
             <div className="mb-6">
               <h3 className="text-lg font-medium mb-4">
                 {entry?.type === "journal" ? "Journal Entry" : 
                  entry?.type === "note" ? "Notes" : "Description"}
               </h3>
-              <HashtagEditor
-                content={content}
-                onChange={setContent}
-                placeholder={getContentPlaceholder(entry?.type)}
-              />
+              
+              {isEditing ? (
+                <HashtagEditor
+                  content={content}
+                  onChange={setContent}
+                  placeholder={getContentPlaceholder(entry?.type)}
+                />
+              ) : (
+                <div className="min-h-[400px] p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <HashtagRenderer content={content || "No content yet. Click 'Edit' to add content."} />
+                </div>
+              )}
             </div>
             
 
