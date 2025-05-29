@@ -58,17 +58,23 @@ export default function EntryPage() {
       setTitle(entry.title || "");
       setContent(entry.content || "");
       setStructuredData(entry.structuredData || {});
-    } else if (isToday) {
-      // Auto-set title for today's journal
-      const today = new Date().toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      setTitle(today);
+      // Existing entries default to view mode
+      setIsEditing(false);
+    } else if (isToday || !entryId) {
+      // New entries and today's journal default to edit mode
+      setIsEditing(true);
+      if (isToday) {
+        // Auto-set title for today's journal
+        const today = new Date().toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        setTitle(today);
+      }
     }
-  }, [entry, isToday]);
+  }, [entry, isToday, entryId]);
 
   // Mutation for updating entry
   const updateMutation = useMutation({
