@@ -1,0 +1,79 @@
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings, Download, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
+
+export default function SettingsMenu() {
+  const { theme, setTheme } = useTheme();
+
+  const handleExport = () => {
+    const link = document.createElement('a');
+    link.href = '/api/export/markdown';
+    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case "dark":
+        return <Moon className="h-4 w-4" />;
+      case "light":
+        return <Sun className="h-4 w-4" />;
+      default:
+        return <Monitor className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="px-2">
+          <Settings className="h-4 w-4" />
+          <span className="ml-2 hidden md:inline">Settings</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Application Settings</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem onClick={handleExport}>
+          <Download className="h-4 w-4 mr-2" />
+          Export All Entries
+        </DropdownMenuItem>
+        
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="flex items-center">
+          {getThemeIcon()}
+          <span className="ml-2">Theme</span>
+        </DropdownMenuLabel>
+        
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          <Sun className="h-4 w-4 mr-2" />
+          Light
+          {theme === "light" && <span className="ml-auto">✓</span>}
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          <Moon className="h-4 w-4 mr-2" />
+          Dark
+          {theme === "dark" && <span className="ml-auto">✓</span>}
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          <Monitor className="h-4 w-4 mr-2" />
+          System
+          {theme === "system" && <span className="ml-auto">✓</span>}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
