@@ -145,8 +145,8 @@ export default function MindmapViewPage() {
     ctx.fillRect(0, 0, width, height);
 
     // Draw connections
-    ctx.strokeStyle = "#E5E7EB";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#9CA3AF";
+    ctx.lineWidth = 2;
     positionedNodes.forEach(node => {
       node.connections.forEach(connId => {
         const connected = positionedNodes.find(n => n.id === connId);

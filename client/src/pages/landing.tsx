@@ -71,14 +71,14 @@ export default function Landing() {
           <Card>
             <CardHeader>
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Search className="h-5 w-5 text-purple-600" />
+                <Network className="h-5 w-5 text-purple-600" />
               </div>
-              <CardTitle className="text-lg">Full-Text Search</CardTitle>
+              <CardTitle className="text-lg">Visual Mindmap</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-secondary">
-                Find any thought, idea, or reference instantly with powerful search 
-                across all your entries and content.
+                Visualize connections between your entries and ideas. 
+                See the big picture of your knowledge network.
               </p>
             </CardContent>
           </Card>
@@ -135,7 +135,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto px-6 py-16 text-center">
           <h2 className="text-2xl font-bold text-dark mb-4">Ready to start organizing your thoughts?</h2>
           <p className="text-secondary mb-8">
-            Join thousands of users who have transformed their note-taking and knowledge management.
+            Transform your note-taking and knowledge management with powerful backlinking and visual connections.
           </p>
           <Button 
             size="lg"
