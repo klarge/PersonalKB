@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -169,6 +169,7 @@ export default function Home() {
                 entries={journalEntries} 
                 isLoading={isLoadingJournal} 
                 emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
+                type="journal"
               />
             </TabsContent>
 
@@ -177,6 +178,7 @@ export default function Home() {
                 entries={noteEntries} 
                 isLoading={isLoadingNotes} 
                 emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
+                type="note"
               />
             </TabsContent>
 
@@ -185,6 +187,7 @@ export default function Home() {
                 entries={peopleEntries} 
                 isLoading={isLoadingPeople} 
                 emptyMessage="No people entries yet. Add someone to your knowledge base!"
+                type="person"
               />
             </TabsContent>
 
@@ -193,6 +196,7 @@ export default function Home() {
                 entries={placeEntries} 
                 isLoading={isLoadingPlaces} 
                 emptyMessage="No places recorded yet. Document important locations!"
+                type="place"
               />
             </TabsContent>
 
@@ -201,6 +205,7 @@ export default function Home() {
                 entries={thingEntries} 
                 isLoading={isLoadingThings} 
                 emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
+                type="thing"
               />
             </TabsContent>
           </Tabs>
@@ -247,7 +252,7 @@ function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
   };
 
   // Update entries when prop changes
-  useState(() => {
+  useEffect(() => {
     setAllEntries(entries);
     setOffset(20);
     setHasMore(entries.length === 20);
