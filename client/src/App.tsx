@@ -10,6 +10,8 @@ import Home from "@/pages/home";
 import Entry from "@/pages/entry";
 import Search from "@/pages/search";
 import Mindmap from "@/pages/mindmap";
+import Stats from "@/pages/stats";
+import MindmapView from "@/pages/mindmap-view";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +35,8 @@ function Router() {
           <Route path="/entry/:id" component={Entry} />
           <Route path="/search" component={Search} />
           <Route path="/mindmap" component={Mindmap} />
+          <Route path="/stats" component={Stats} />
+          <Route path="/mindmap-view" component={MindmapView} />
         </>
       )}
       <Route component={NotFound} />

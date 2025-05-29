@@ -7,8 +7,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Download, Moon, Sun, Monitor } from "lucide-react";
+import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { Link } from "wouter";
 
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
@@ -43,6 +44,22 @@ export default function SettingsMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Application Settings</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        <Link href="/stats">
+          <DropdownMenuItem>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Stats
+          </DropdownMenuItem>
+        </Link>
+        
+        <Link href="/mindmap-view">
+          <DropdownMenuItem>
+            <Network className="h-4 w-4 mr-2" />
+            Knowledge Mindmap
+          </DropdownMenuItem>
+        </Link>
+        
         <DropdownMenuSeparator />
         
         <DropdownMenuItem onClick={handleExport}>
