@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import HashtagEditor from "@/components/hashtag-editor";
+import HashtagRenderer from "@/components/hashtag-renderer";
 import type { Entry } from "@shared/schema";
 
 export default function EntryPage() {
@@ -600,19 +601,7 @@ export default function EntryPage() {
               />
             </div>
             
-            {/* Hashtags Display */}
-            {hashtags.length > 0 && (
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Connected Ideas</h3>
-                <div className="flex flex-wrap gap-2">
-                  {hashtags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             {/* Backlinks Section */}
             {backlinks.length > 0 && (
