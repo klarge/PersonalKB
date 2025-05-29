@@ -5,8 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package, Download } from "lucide-react";
+import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
+import SettingsMenu from "@/components/settings-menu";
+import HashtagRenderer from "@/components/hashtag-renderer";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -88,22 +90,7 @@ export default function Home() {
                 <CreateEntryDialog type="person" />
                 <CreateEntryDialog type="place" />
                 <CreateEntryDialog type="thing" />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = '/api/export/markdown';
-                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Export
-                </Button>
+                <SettingsMenu />
               </div>
 
               {/* Mobile version of desktop buttons */}
@@ -111,22 +98,7 @@ export default function Home() {
                 <CreateEntryDialog type="person" />
                 <CreateEntryDialog type="place" />
                 <CreateEntryDialog type="thing" />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="px-2"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = '/api/export/markdown';
-                    link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
+                <SettingsMenu />
               </div>
             </div>
           </div>
@@ -323,24 +295,9 @@ function EntryCard({ entry }: { entry: Entry }) {
           {entry.title}
         </h3>
         
-        <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-          {preview}
-        </p>
-        
-        {hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {hashtags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {hashtags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{hashtags.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
+        <div className="text-gray-600 text-sm mb-3 line-clamp-3">
+          <HashtagRenderer content={preview} />
+        </div>
       </div>
     </Link>
   );
