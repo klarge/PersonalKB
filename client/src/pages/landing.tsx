@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, PenTool, Search, Network, Users, Shield } from "lucide-react";
+import { BookOpen, PenTool, Search, Server, Users, Shield, Network } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -13,7 +13,7 @@ export default function Landing() {
               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-3xl font-bold text-dark">Personal Notebook</h1>
+              <h1 className="text-3xl font-bold text-dark">Personal KB</h1>
             </div>
             <p className="text-xl text-secondary mb-8 max-w-2xl mx-auto">
               Your personal knowledge management system with journaling, backlinking, and mindmap features. 
@@ -86,14 +86,14 @@ export default function Landing() {
           <Card>
             <CardHeader>
               <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <Network className="h-5 w-5 text-orange-600" />
+                <Server className="h-5 w-5 text-orange-600" />
               </div>
-              <CardTitle className="text-lg">Visual Mindmaps</CardTitle>
+              <CardTitle className="text-lg">Self Hosting</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-secondary">
-                Visualize connections between your entries and ideas. 
-                See the big picture of your knowledge network.
+                Run your own instance with complete control over your data. 
+                Deploy easily on any server or platform you choose.
               </p>
             </CardContent>
           </Card>
@@ -107,8 +107,8 @@ export default function Landing() {
             </CardHeader>
             <CardContent>
               <p className="text-secondary">
-                Secure authentication system supporting multiple users. 
-                Your data is private and protected.
+                Secure authentication system supporting multiple users 
+                with isolated data access for each account.
               </p>
             </CardContent>
           </Card>
