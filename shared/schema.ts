@@ -33,6 +33,16 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// API tokens table for API access
+export const apiTokens = pgTable("api_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token").notNull().unique(),
+  name: varchar("name").notNull(),
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Main entries table (both journal and notes)
 export const entries = pgTable("entries", {
   id: serial("id").primaryKey(),
@@ -74,6 +84,14 @@ export const images = pgTable("images", {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   entries: many(entries),
+  apiTokens: many(apiTokens),
+}));
+
+export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [apiTokens.userId],
+    references: [users.id],
+  }),
 }));
 
 export const entriesRelations = relations(entries, ({ one, many }) => ({
@@ -127,6 +145,8 @@ export const insertImageSchema = createInsertSchema(images).omit({
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type ApiToken = typeof apiTokens.$inferSelect;
+export type InsertApiToken = typeof apiTokens.$inferInsert;
 export type Entry = typeof entries.$inferSelect;
 export type InsertEntry = typeof insertEntrySchema._type;
 export type Tag = typeof tags.$inferSelect;
