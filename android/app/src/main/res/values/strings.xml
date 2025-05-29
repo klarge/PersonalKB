@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Personal KB</string>
+    <string name="title_activity_main">Personal KB</string>
+    <string name="package_name">com.personalkb.app</string>
+    <string name="custom_url_scheme">com.personalkb.app</string>
+</resources>
