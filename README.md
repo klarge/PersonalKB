@@ -2,7 +2,7 @@
 
 A self-hosted personal knowledge management system that combines journaling, note-taking, and knowledge organization with intelligent backlinking and visual mindmaps.
 
-## Features
+## Key Features
 
 - **Rich Text Journaling**: Write with a powerful editor that supports markdown, image pasting, and formatting. Perfect for daily journaling and long-form thoughts.
 
