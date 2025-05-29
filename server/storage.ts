@@ -24,6 +24,13 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
+  // API Token operations
+  createApiToken(token: InsertApiToken): Promise<ApiToken>;
+  getApiTokensByUser(userId: string): Promise<ApiToken[]>;
+  getApiTokenByToken(token: string): Promise<ApiToken | undefined>;
+  deleteApiToken(id: number): Promise<void>;
+  updateApiTokenLastUsed(id: number): Promise<void>;
+  
   // Entry operations
   getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing", limit?: number, offset?: number): Promise<Entry[]>;
   getEntryById(id: number): Promise<Entry | undefined>;
@@ -67,6 +74,42 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // API Token operations
+  async createApiToken(tokenData: InsertApiToken): Promise<ApiToken> {
+    const [token] = await db
+      .insert(apiTokens)
+      .values(tokenData)
+      .returning();
+    return token;
+  }
+
+  async getApiTokensByUser(userId: string): Promise<ApiToken[]> {
+    return await db
+      .select()
+      .from(apiTokens)
+      .where(eq(apiTokens.userId, userId))
+      .orderBy(desc(apiTokens.createdAt));
+  }
+
+  async getApiTokenByToken(token: string): Promise<ApiToken | undefined> {
+    const [result] = await db
+      .select()
+      .from(apiTokens)
+      .where(eq(apiTokens.token, token));
+    return result;
+  }
+
+  async deleteApiToken(id: number): Promise<void> {
+    await db.delete(apiTokens).where(eq(apiTokens.id, id));
+  }
+
+  async updateApiTokenLastUsed(id: number): Promise<void> {
+    await db
+      .update(apiTokens)
+      .set({ lastUsed: new Date() })
+      .where(eq(apiTokens.id, id));
   }
 
   // Entry operations

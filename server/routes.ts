@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import crypto from "crypto";
 import { insertEntrySchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -288,6 +289,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching autocomplete entries:", error);
       res.status(500).json({ message: "Failed to fetch autocomplete entries" });
+    }
+  });
+
+  // API Token management routes
+  app.get("/api/tokens", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tokens = await storage.getApiTokensByUser(userId);
+      res.json(tokens);
+    } catch (error) {
+      console.error("Error fetching API tokens:", error);
+      res.status(500).json({ message: "Failed to fetch API tokens" });
+    }
+  });
+
+  app.post("/api/tokens", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name } = req.body;
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ message: "Token name is required" });
+      }
+
+      // Generate a secure random token
+      const token = `pkb_${crypto.randomBytes(32).toString('hex')}`;
+
+      const apiToken = await storage.createApiToken({
+        userId,
+        name: name.trim(),
+        token,
+      });
+
+      res.json(apiToken);
+    } catch (error) {
+      console.error("Error creating API token:", error);
+      res.status(500).json({ message: "Failed to create API token" });
+    }
+  });
+
+  app.delete("/api/tokens/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tokenId = parseInt(req.params.id);
+
+      // Get the token to verify ownership
+      const tokens = await storage.getApiTokensByUser(userId);
+      const token = tokens.find(t => t.id === tokenId);
+
+      if (!token) {
+        return res.status(404).json({ message: "Token not found" });
+      }
+
+      await storage.deleteApiToken(tokenId);
+      res.json({ message: "Token deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting API token:", error);
+      res.status(500).json({ message: "Failed to delete API token" });
+    }
+  });
+
+  // API Token authentication middleware
+  const authenticateApiToken = async (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Missing or invalid authorization header" });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    try {
+      const apiToken = await storage.getApiTokenByToken(token);
+      
+      if (!apiToken) {
+        return res.status(401).json({ message: "Invalid API token" });
+      }
+
+      // Update last used timestamp
+      await storage.updateApiTokenLastUsed(apiToken.id);
+
+      // Set user context for API requests
+      req.user = { claims: { sub: apiToken.userId } };
+      req.isApiRequest = true;
+      
+      next();
+    } catch (error) {
+      console.error("Error authenticating API token:", error);
+      res.status(500).json({ message: "Authentication error" });
+    }
+  };
+
+  // API-only routes (for external access)
+  app.get("/api/v1/entries", authenticateApiToken, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const entries = await storage.getEntriesByUser(userId, type, limit, offset);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching entries via API:", error);
+      res.status(500).json({ message: "Failed to fetch entries" });
+    }
+  });
+
+  app.post("/api/v1/entries", authenticateApiToken, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const entryData = { ...req.body, userId };
+
+      // Validate required fields
+      if (!entryData.title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+
+      if (!entryData.date) {
+        entryData.date = new Date();
+      }
+
+      const entry = await storage.createEntry(entryData);
+
+      // Process hashtags if content contains them
+      if (entryData.content) {
+        await storage.processHashtags(entry.id, entryData.content);
+      }
+
+      res.status(201).json(entry);
+    } catch (error) {
+      console.error("Error creating entry via API:", error);
+      res.status(500).json({ message: "Failed to create entry" });
     }
   });
 
