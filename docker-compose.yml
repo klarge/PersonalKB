@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   personal-kb:
-    build: .
+    image: ghcr.io/yourusername/personal-kb:latest
+    # Uncomment the line below if you want to build from source instead
+    # build: .
     container_name: personal-kb
     restart: unless-stopped
     ports:
