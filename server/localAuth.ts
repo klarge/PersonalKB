@@ -21,7 +21,7 @@ export function setupLocalAuth(app: Express) {
     const pgStore = connectPg(session);
     const sessionStore = new pgStore({
       conString: process.env.DATABASE_URL,
-      createTableIfMissing: false,
+      createTableIfMissing: true,
       ttl: sessionTtl,
       tableName: "sessions",
     });
@@ -102,6 +102,7 @@ export function setupLocalAuth(app: Express) {
   // Register route
   app.post('/api/register', async (req, res) => {
     try {
+      console.log('Registration attempt started');
       const { email, password, firstName, lastName } = req.body;
 
       // Validate required fields
@@ -120,15 +121,18 @@ export function setupLocalAuth(app: Express) {
         return res.status(400).json({ message: 'Password must be at least 8 characters' });
       }
 
+      console.log('Checking if user exists...');
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 12);
+      console.log('Hashing password...');
+      // Hash password with lower rounds to avoid timeout issues in Docker
+      const passwordHash = await bcrypt.hash(password, 10);
 
+      console.log('Creating user...');
       // Create user
       const user = await storage.createLocalUser({
         email,
@@ -137,19 +141,21 @@ export function setupLocalAuth(app: Express) {
         lastName
       });
 
+      console.log('User created, attempting login...');
       // Log them in
       req.login(user, (err) => {
         if (err) {
           console.error('Login after registration failed:', err);
           return res.status(500).json({ message: 'Registration successful but login failed' });
         }
+        console.log('Registration completed successfully');
         res.status(201).json(user);
       });
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Registration error details:', error);
       res.status(500).json({ 
         message: 'Registration failed', 
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+        error: process.env.NODE_ENV === 'development' ? String(error) : undefined 
       });
     }
   });
