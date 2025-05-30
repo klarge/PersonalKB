@@ -13,7 +13,10 @@ import Mindmap from "@/pages/mindmap";
 import Stats from "@/pages/stats";
 import MindmapView from "@/pages/mindmap-view";
 import ApiTokens from "@/pages/api-tokens";
+import ServerConfig from "@/pages/server-config";
 import NotFound from "@/pages/not-found";
+import { ServerConfig as ServerConfigUtil } from "@/lib/server-config";
+import { Capacitor } from "@capacitor/core";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
