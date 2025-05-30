@@ -19,40 +19,30 @@ export default function Home() {
 
   const { data: allEntries = [], isLoading: isLoadingAll } = useQuery<Entry[]>({
     queryKey: ["/api/entries"],
-    queryFn: () => fetch("/api/entries?limit=20").then(res => res.json()),
   });
 
   const { data: journalEntries = [], isLoading: isLoadingJournal } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "journal" }],
-    queryFn: () => fetch("/api/entries?type=journal&limit=20").then(res => res.json()),
   });
 
   const { data: noteEntries = [], isLoading: isLoadingNotes } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "note" }],
-    queryFn: () => fetch("/api/entries?type=note&limit=20").then(res => res.json()),
   });
 
   const { data: peopleEntries = [], isLoading: isLoadingPeople } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "person" }],
-    queryFn: () => fetch("/api/entries?type=person&limit=20").then(res => res.json()),
   });
 
   const { data: placeEntries = [], isLoading: isLoadingPlaces } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "place" }],
-    queryFn: () => fetch("/api/entries?type=place&limit=20").then(res => res.json()),
   });
 
   const { data: thingEntries = [], isLoading: isLoadingThings } = useQuery<Entry[]>({
     queryKey: ["/api/entries", { type: "thing" }],
-    queryFn: () => fetch("/api/entries?type=thing&limit=20").then(res => res.json()),
   });
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery<Entry[]>({
     queryKey: ["/api/search", searchQuery],
-    queryFn: () => {
-      if (!searchQuery.trim()) return [];
-      return fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`).then(res => res.json());
-    },
     enabled: searchQuery.trim().length > 0,
   });
 
