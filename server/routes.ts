@@ -67,6 +67,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
+  // Always setup local auth routes as fallback, even if external auth is primary
+  if (process.env.REPL_ID || process.env.GOOGLE_CLIENT_ID) {
+    console.log("Setting up local authentication as fallback option.");
+    const { setupLocalAuth } = await import("./localAuth");
+    setupLocalAuth(app);
+  }
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
