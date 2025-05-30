@@ -3,42 +3,52 @@
 // Polyfill for import.meta.dirname in Node.js production builds
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import Module from 'module';
 
 // Set up dirname polyfill for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Create a global polyfill that the compiled code can access
-globalThis.__importMetaDirname = __dirname;
+// Monkey patch the Module constructor to handle import.meta properly
+const originalCreateRequire = Module.createRequire;
+const originalImport = Module.prototype.import;
 
-// Override the module resolution to handle missing dirname
-const originalResolve = import.meta.resolve;
-if (originalResolve) {
-  import.meta.resolve = function(...args) {
-    try {
-      return originalResolve.apply(this, args);
-    } catch (err) {
-      // Fallback for when dirname is undefined
-      if (err.code === 'ERR_INVALID_ARG_TYPE' && args[0] === undefined) {
-        return new URL('./', import.meta.url).href;
-      }
-      throw err;
+// Create a module-level polyfill for import.meta.dirname
+function createImportMeta(url) {
+  const meta = {
+    url,
+    dirname: dirname(fileURLToPath(url)),
+    resolve: (specifier) => {
+      return new URL(specifier, url).href;
     }
   };
+  return meta;
 }
 
-// Set dirname if it's undefined
+// Patch the global import.meta for the main module
 if (typeof import.meta.dirname === 'undefined') {
-  try {
-    Object.defineProperty(import.meta, 'dirname', {
-      value: __dirname,
-      writable: false,
-      configurable: true
-    });
-  } catch (e) {
-    // If we can't set it directly, the global fallback will work
-  }
+  Object.defineProperty(import.meta, 'dirname', {
+    value: __dirname,
+    writable: false,
+    configurable: true
+  });
 }
+
+// Global polyfill for modules that can't access import.meta.dirname
+globalThis.__importMetaDirname = __dirname;
+globalThis.__createImportMeta = createImportMeta;
+
+// Override path.resolve to handle undefined arguments gracefully
+import path from 'path';
+const originalResolve = path.resolve;
+path.resolve = function(...args) {
+  // Replace undefined arguments with the current directory
+  const filteredArgs = args.map(arg => arg === undefined ? __dirname : arg);
+  return originalResolve.apply(this, filteredArgs);
+};
+
+// Export the patched path for use by other modules
+globalThis.__patchedPath = path;
 
 // Now import and run the actual application
 import('./dist/index.js');
