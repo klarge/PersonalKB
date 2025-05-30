@@ -14,8 +14,10 @@ services:
       - REPL_ID=${REPL_ID}
       - REPLIT_DOMAINS=${REPLIT_DOMAINS}
       - ISSUER_URL=${ISSUER_URL:-https://replit.com/oidc}
+      - BACKUP_DIR=/app/backups
     volumes:
       - uploads:/app/uploads
+      - backups:/app/backups
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,3 +43,4 @@ services:
 volumes:
   postgres_data:
   uploads:
+  backups:

@@ -26,9 +26,10 @@ WORKDIR /app
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
-# Create non-root user
+# Create non-root user and backup directory
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S personal-kb -u 1001
+RUN mkdir -p /app/backups
 
 # Copy built application and dependencies
 COPY --from=builder /app/dist ./dist
@@ -38,6 +39,9 @@ COPY --from=builder /app/package*.json ./
 # Change ownership to non-root user
 RUN chown -R personal-kb:nodejs /app
 USER personal-kb
+
+# Environment variables
+ENV BACKUP_DIR=/app/backups
 
 # Expose port
 EXPOSE 5000

@@ -28,11 +28,7 @@ export default function SettingsMenu() {
   };
 
   const backupMutation = useMutation({
-    mutationFn: () => apiRequest({
-      url: '/api/backup',
-      method: 'POST',
-      body: {}
-    }),
+    mutationFn: () => apiRequest('/api/backup', 'POST', {}),
     onSuccess: (data: any) => {
       toast({
         title: "Backup Created",
@@ -94,6 +90,11 @@ export default function SettingsMenu() {
         <DropdownMenuItem onClick={handleExport}>
           <Download className="h-4 w-4 mr-2" />
           Export All Entries
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem onClick={handleBackup} disabled={backupMutation.isPending}>
+          <HardDrive className="h-4 w-4 mr-2" />
+          {backupMutation.isPending ? "Creating Backup..." : "Create Server Backup"}
         </DropdownMenuItem>
         
         <Link href="/api-tokens">
