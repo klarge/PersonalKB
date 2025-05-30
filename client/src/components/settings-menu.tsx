@@ -7,12 +7,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network, Key } from "lucide-react";
+import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
 
   const handleExport = () => {
     const link = document.createElement('a');
@@ -21,6 +25,31 @@ export default function SettingsMenu() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const backupMutation = useMutation({
+    mutationFn: () => apiRequest({
+      url: '/api/backup',
+      method: 'POST',
+      body: {}
+    }),
+    onSuccess: (data: any) => {
+      toast({
+        title: "Backup Created",
+        description: `Server backup created successfully with ${data.entryCount} entries`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Backup Failed",
+        description: error.message || "Failed to create server backup",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleBackup = () => {
+    backupMutation.mutate();
   };
 
   const getThemeIcon = () => {

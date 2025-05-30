@@ -456,104 +456,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to create export zip
+  async function createExportZip(entries: any[], userId: string) {
+    const JSZip = (await import('jszip')).default;
+    const zip = new JSZip();
+      
+    // Create folders for each entry type
+    const journalFolder = zip.folder("01-Journal");
+    const notesFolder = zip.folder("02-Quick-Notes");
+    const peopleFolder = zip.folder("03-People");
+    const placesFolder = zip.folder("04-Places");
+    const thingsFolder = zip.folder("05-Things");
+
+    // Process each entry
+    for (const entry of entries) {
+      let content = `# ${entry.title}\n\n`;
+      content += `**Type:** ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}\n`;
+      content += `**Created:** ${new Date(entry.date).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}\n\n`;
+
+      // Add structured data if available
+      if (entry.structuredData && Object.keys(entry.structuredData).length > 0) {
+        content += `## Details\n\n`;
+        for (const [key, value] of Object.entries(entry.structuredData)) {
+          if (value) {
+            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+            content += `**${label}:** ${value}\n`;
+          }
+        }
+        content += `\n`;
+      }
+
+      // Add main content
+      if (entry.content.trim()) {
+        content += `## ${entry.type === 'journal' ? 'Journal Entry' : 
+                            entry.type === 'note' ? 'Notes' : 'Description'}\n\n`;
+        content += `${entry.content}\n\n`;
+      }
+
+      // Create safe filename
+      const safeTitle = entry.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
+      const datePrefix = new Date(entry.date).toISOString().split('T')[0];
+      const filename = `${datePrefix}-${safeTitle}.md`;
+
+      // Add to appropriate folder
+      switch (entry.type) {
+        case 'journal':
+          journalFolder?.file(filename, content);
+          break;
+        case 'note':
+          notesFolder?.file(filename, content);
+          break;
+        case 'person':
+          peopleFolder?.file(filename, content);
+          break;
+        case 'place':
+          placesFolder?.file(filename, content);
+          break;
+        case 'thing':
+          thingsFolder?.file(filename, content);
+          break;
+      }
+    }
+
+    // Add a README file
+    const readme = `# My Knowledge Base Export\n\n`;
+    const readmeContent = readme + 
+      `**Generated:** ${new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })}\n\n` +
+      `**Total Entries:** ${entries.length}\n\n` +
+      `## Folder Structure\n\n` +
+      `- **01-Journal**: Daily journal entries and reflections\n` +
+      `- **02-Quick-Notes**: Quick thoughts and ideas\n` +
+      `- **03-People**: Information about people you know\n` +
+      `- **04-Places**: Details about places you've visited or want to visit\n` +
+      `- **05-Things**: Documentation of items, concepts, and tools\n\n` +
+      `## How to Use\n\n` +
+      `Each entry is saved as a separate markdown file with:\n` +
+      `- Structured metadata (name, dates, etc.)\n` +
+      `- Your personal notes and thoughts\n` +
+      `- Hashtag connections preserved as links\n\n` +
+      `You can open these files in any markdown editor or note-taking app!\n`;
+
+    zip.file("README.md", readmeContent);
+
+    // Generate zip buffer
+    return await zip.generateAsync({ type: "nodebuffer" });
+  }
+
   // Export entries as individual markdown files in a zip
   app.get("/api/export/markdown", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const entries = await storage.getEntriesByUser(userId);
       
-      const JSZip = (await import('jszip')).default;
-      const zip = new JSZip();
-      
-      // Create folders for each entry type
-      const journalFolder = zip.folder("01-Journal");
-      const notesFolder = zip.folder("02-Quick-Notes");
-      const peopleFolder = zip.folder("03-People");
-      const placesFolder = zip.folder("04-Places");
-      const thingsFolder = zip.folder("05-Things");
-
-      // Process each entry
-      for (const entry of entries) {
-        let content = `# ${entry.title}\n\n`;
-        content += `**Type:** ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}\n`;
-        content += `**Created:** ${new Date(entry.date).toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })}\n\n`;
-
-        // Add structured data if available
-        if (entry.structuredData && Object.keys(entry.structuredData).length > 0) {
-          content += `## Details\n\n`;
-          for (const [key, value] of Object.entries(entry.structuredData)) {
-            if (value) {
-              const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-              content += `**${label}:** ${value}\n`;
-            }
-          }
-          content += `\n`;
-        }
-
-        // Add main content
-        if (entry.content.trim()) {
-          content += `## ${entry.type === 'journal' ? 'Journal Entry' : 
-                              entry.type === 'note' ? 'Notes' : 'Description'}\n\n`;
-          content += `${entry.content}\n\n`;
-        }
-
-        // Create safe filename
-        const safeTitle = entry.title.replace(/[^a-zA-Z0-9\s-]/g, '').replace(/\s+/g, '-');
-        const datePrefix = new Date(entry.date).toISOString().split('T')[0];
-        const filename = `${datePrefix}-${safeTitle}.md`;
-
-        // Add to appropriate folder
-        switch (entry.type) {
-          case 'journal':
-            journalFolder?.file(filename, content);
-            break;
-          case 'note':
-            notesFolder?.file(filename, content);
-            break;
-          case 'person':
-            peopleFolder?.file(filename, content);
-            break;
-          case 'place':
-            placesFolder?.file(filename, content);
-            break;
-          case 'thing':
-            thingsFolder?.file(filename, content);
-            break;
-        }
-      }
-
-      // Add a README file
-      const readme = `# My Knowledge Base Export\n\n`;
-      const readmeContent = readme + 
-        `**Generated:** ${new Date().toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        })}\n\n` +
-        `**Total Entries:** ${entries.length}\n\n` +
-        `## Folder Structure\n\n` +
-        `- **01-Journal**: Daily journal entries and reflections\n` +
-        `- **02-Quick-Notes**: Quick thoughts and ideas\n` +
-        `- **03-People**: Information about people you know\n` +
-        `- **04-Places**: Details about places you've visited or want to visit\n` +
-        `- **05-Things**: Documentation of items, concepts, and tools\n\n` +
-        `## How to Use\n\n` +
-        `Each entry is saved as a separate markdown file with:\n` +
-        `- Structured metadata (name, dates, etc.)\n` +
-        `- Your personal notes and thoughts\n` +
-        `- Hashtag connections preserved as links\n\n` +
-        `You can open these files in any markdown editor or note-taking app!\n`;
-
-      zip.file("README.md", readmeContent);
-
-      // Generate zip buffer
-      const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+      const zipBuffer = await createExportZip(entries, userId);
 
       // Send as zip file
       const filename = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
@@ -563,6 +568,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting entries:", error);
       res.status(500).json({ message: "Failed to export entries" });
+    }
+  });
+
+  // Create server-side backup
+  app.post('/api/backup', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const entries = await storage.getEntriesByUser(userId);
+      
+      if (entries.length === 0) {
+        return res.status(404).json({ message: "No entries found to backup" });
+      }
+
+      const zipBuffer = await createExportZip(entries, userId);
+      
+      // Create backup directory if it doesn't exist
+      const backupDir = process.env.BACKUP_DIR || './backups';
+      if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+      }
+      
+      // Generate filename with timestamp and user ID
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `backup_${userId}_${timestamp}.zip`;
+      const filepath = path.join(backupDir, filename);
+      
+      // Save the backup file
+      fs.writeFileSync(filepath, zipBuffer);
+      
+      res.json({ 
+        message: "Backup created successfully",
+        filename: filename,
+        timestamp: new Date().toISOString(),
+        entryCount: entries.length
+      });
+    } catch (error) {
+      console.error("Backup error:", error);
+      res.status(500).json({ message: "Failed to create backup" });
     }
   });
 
