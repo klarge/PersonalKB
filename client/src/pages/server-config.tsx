@@ -32,9 +32,12 @@ export default function ServerConfig() {
     setError("");
 
     try {
-      // Ensure URL has protocol
+      // Ensure URL has HTTPS protocol
       let url = serverUrl.trim();
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      if (!url.startsWith("https://")) {
+        if (url.startsWith("http://")) {
+          throw new Error("Only HTTPS connections are allowed for security");
+        }
         url = "https://" + url;
       }
 

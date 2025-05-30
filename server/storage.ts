@@ -18,6 +18,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
+import crypto from "crypto";
 
 export interface IStorage {
   // User operations
@@ -30,6 +31,12 @@ export interface IStorage {
     firstName: string;
     lastName: string;
     profileImageUrl?: string;
+  }): Promise<User>;
+  createLocalUser(userData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    passwordHash: string;
   }): Promise<User>;
   
   // API Token operations
@@ -104,6 +111,25 @@ export class DatabaseStorage implements IStorage {
         firstName: userData.firstName,
         lastName: userData.lastName,
         profileImageUrl: userData.profileImageUrl,
+      })
+      .returning();
+    return user;
+  }
+
+  async createLocalUser(userData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    passwordHash: string;
+  }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: crypto.randomUUID(),
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        passwordHash: userData.passwordHash,
       })
       .returning();
     return user;
