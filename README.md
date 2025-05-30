@@ -14,7 +14,7 @@ A self-hosted personal knowledge management system that combines journaling, not
 
 - **Multi-User Support**: Secure authentication system supporting multiple users with isolated data access for each account.
 
-- **Export & Backup**: Export all your data as organized markdown files for backup or migration purposes.
+- **Export & Backup**: Export all your data as organized markdown files for backup or migration purposes. Includes both client-side export and server-side backup functionality.
 
 ## Entry Types
 
@@ -129,6 +129,9 @@ NODE_ENV=production
 
 # Option 3: No authentication (single-user mode)
 # Leave all auth variables blank for single-user access
+
+# Backup Configuration
+BACKUP_DIR=/app/backups
 EOF
 
 # Start the application
@@ -315,6 +318,7 @@ The application supports multiple authentication methods. Choose the one that be
 **Optional:**
 - `PORT`: Server port (default: 5000)
 - `UPLOAD_DIR`: Directory for file uploads (default: ./uploads)
+- `BACKUP_DIR`: Directory for server-side backups (default: ./backups)
 
 #### Monitoring and Maintenance
 
