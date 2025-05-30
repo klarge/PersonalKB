@@ -80,12 +80,37 @@ The Android app includes all web features plus mobile-specific enhancements:
 - **Export**: Download all entries as organized markdown files
 
 ### Mobile Enhancements
+- **Offline Mode with Two-Way Sync**: Create and edit entries while offline, automatically sync when back online
 - **Camera Integration**: Take photos directly from the app
 - **File Sharing**: Share entries with other apps
 - **Device Information**: Access device-specific details
 - **Network Detection**: Automatic sync when online
 - **Native Status Bar**: Properly styled status bar
 - **Splash Screen**: Professional app loading screen
+
+### Two-Way Offline Sync
+
+The Android app includes robust offline functionality:
+
+**When Offline:**
+- Create new entries (stored locally with temporary IDs)
+- Edit existing entries (changes queued for sync)
+- Browse all previously synced content
+- Search through offline content
+- Full app functionality maintained
+
+**When Back Online:**
+- Automatically detects network connectivity
+- Syncs all offline changes to the server
+- Resolves any conflicts intelligently
+- Updates local storage with server responses
+- Shows sync progress and pending item count
+
+**Sync Indicator:**
+- Visual indicator shows online/offline status
+- Displays count of pending changes
+- Manual sync trigger available
+- Real-time sync progress feedback
 
 ### Permissions
 
