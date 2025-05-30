@@ -26,7 +26,7 @@ allprojects {
     }
 }
 
-// Configure Java version for all projects
+// Configure Java and Kotlin version for all projects
 subprojects {
     afterEvaluate {
         if (project.hasProperty('android')) {
@@ -36,6 +36,11 @@ subprojects {
                     targetCompatibility JavaVersion.VERSION_17
                 }
             }
+        }
+        
+        // Override Kotlin JVM target for all Kotlin compilation tasks
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions.jvmTarget = '17'
         }
     }
 }
