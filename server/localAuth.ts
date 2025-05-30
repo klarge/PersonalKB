@@ -2,6 +2,9 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
 import type { Express } from "express";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import crypto from "crypto";
 import { storage } from "./storage";
 
 // Simple local authentication for self-hosted deployments

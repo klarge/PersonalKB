@@ -365,7 +365,7 @@ export class DatabaseStorage implements IStorage {
     const hashtags = content.match(hashtagRegex) || [];
     
     // Process each unique hashtag
-    const uniqueHashtags = [...new Set(hashtags)];
+    const uniqueHashtags = Array.from(new Set(hashtags));
     for (const hashtag of uniqueHashtags) {
       const tag = await this.getOrCreateTag(hashtag);
       await this.addTagToEntry(entryId, tag.id);

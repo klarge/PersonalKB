@@ -55,22 +55,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(401).json({ message: "Unauthorized" });
     };
   } else {
-    // No authentication configured - single user mode
-    console.warn("No authentication configured. Running in single-user mode.");
-    app.use((req: any, res, next) => {
-      // Set user for single-user mode
-      req.user = { 
-        claims: { sub: "single-user" },
-        id: "single-user", 
-        email: "user@localhost", 
-        firstName: "User", 
-        lastName: "" 
-      };
-      req.isAuthenticated = () => true;
-      next();
-    });
-    // Single user mode middleware - always allow access
-    isAuthenticated = (req: any, res: any, next: any) => next();
+    // No external authentication configured - use local username/password auth
+    console.log("No external authentication configured. Using local username/password authentication.");
+    const { setupLocalAuth } = await import("./localAuth");
+    setupLocalAuth(app);
+    isAuthenticated = (req: any, res: any, next: any) => {
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        return next();
+      }
+      res.status(401).json({ message: "Unauthorized" });
+    };
   }
 
   // Auth routes
