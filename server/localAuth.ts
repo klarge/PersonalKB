@@ -72,8 +72,22 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Login route
-  app.post('/api/login', passport.authenticate('local'), (req, res) => {
-    res.json(req.user);
+  app.post('/api/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        return res.status(500).json({ message: 'Login failed' });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
+      }
+
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Login failed' });
+        }
+        res.json(user);
+      });
+    })(req, res, next);
   });
 
   // Register route
