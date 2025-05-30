@@ -20,9 +20,17 @@ import { db } from "./db";
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createGoogleUser(userData: {
+    googleId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl?: string;
+  }): Promise<User>;
   
   // API Token operations
   createApiToken(token: InsertApiToken): Promise<ApiToken>;
@@ -61,6 +69,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -71,6 +84,26 @@ export class DatabaseStorage implements IStorage {
           ...userData,
           updatedAt: new Date(),
         },
+      })
+      .returning();
+    return user;
+  }
+
+  async createGoogleUser(userData: {
+    googleId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl?: string;
+  }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userData.googleId,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
       })
       .returning();
     return user;

@@ -116,11 +116,19 @@ POSTGRES_PASSWORD=your_secure_password
 SESSION_SECRET=$(openssl rand -hex 32)
 NODE_ENV=production
 
-# Authentication Configuration (Optional - only needed if using Replit Auth)
-# Leave these blank to use local authentication instead
+# Authentication Configuration (Choose one option or leave blank for single-user mode)
+
+# Option 1: Google OAuth (Recommended for self-hosting)
+# GOOGLE_CLIENT_ID=your_google_client_id
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Option 2: Replit Auth (if you have a Replit account)
 # REPL_ID=your_repl_id
 # REPLIT_DOMAINS=your-domain.com
 # ISSUER_URL=https://replit.com/oidc
+
+# Option 3: No authentication (single-user mode)
+# Leave all auth variables blank for single-user access
 EOF
 
 # Start the application
@@ -286,14 +294,23 @@ sudo systemctl status personal-kb
 
 **Authentication:**
 
-The application currently uses Replit Auth for authentication. For self-hosted deployments, you have two options:
+The application supports multiple authentication methods. Choose the one that best fits your deployment:
 
-1. **Use Replit Auth (if you have a Replit account):**
+1. **Google OAuth (Recommended for self-hosting):**
+   - `GOOGLE_CLIENT_ID`: Your Google OAuth client ID
+   - `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret
+   - Set up OAuth consent screen at https://console.cloud.google.com/
+   - Add your domain to authorized redirect URIs
+
+2. **Replit Auth (for Replit deployments):**
    - `REPL_ID`: Your Replit application ID
    - `REPLIT_DOMAINS`: Comma-separated list of allowed domains
    - `ISSUER_URL`: OAuth issuer URL (default: https://replit.com/oidc)
 
-2. **Self-hosted authentication:** Currently requires Replit Auth. A local authentication system for completely independent deployments is planned for future releases.
+3. **Single-user mode (no authentication):**
+   - Leave all authentication variables blank
+   - Suitable for personal use or trusted environments
+   - All features available without login
 
 **Optional:**
 - `PORT`: Server port (default: 5000)

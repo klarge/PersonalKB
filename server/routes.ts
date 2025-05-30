@@ -35,8 +35,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Auth middleware
-  await setupAuth(app);
+  // Setup authentication based on available environment variables
+  if (process.env.REPL_ID && process.env.REPLIT_DOMAINS) {
+    // Use Replit Auth if configured
+    const { setupAuth } = await import("./replitAuth");
+    await setupAuth(app);
+  } else if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    // Use Google Auth if configured
+    const { setupGoogleAuth } = await import("./googleAuth");
+    setupGoogleAuth(app);
+  } else {
+    // No authentication configured - single user mode
+    console.warn("No authentication configured. Running in single-user mode.");
+    app.use((req: any, res, next) => {
+      // Mock user for single-user mode
+      req.user = { 
+        id: "single-user", 
+        email: "user@localhost", 
+        firstName: "User", 
+        lastName: "" 
+      };
+      req.isAuthenticated = () => true;
+      next();
+    });
+  }
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
