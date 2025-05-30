@@ -181,6 +181,61 @@ For Google Play Store distribution:
 
 ## Troubleshooting
 
+### Java Version Compatibility Issues
+
+The most common Android build failure is "invalid source release: 21" or similar Java version errors. Here's how to fix it:
+
+**Step 1: Verify Java 17 Installation**
+```bash
+java -version
+javac -version
+```
+Both should show version 17.x.x
+
+**Step 2: Install Java 17 if needed**
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install openjdk-17-jdk
+
+# macOS with Homebrew
+brew install openjdk@17
+
+# Windows - Download from https://adoptium.net/
+```
+
+**Step 3: Set JAVA_HOME Environment Variable**
+```bash
+# Linux/macOS (add to ~/.bashrc or ~/.zshrc)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+# macOS with Homebrew
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17
+
+# Windows (System Environment Variables)
+JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.x.x-hotspot
+```
+
+**Step 4: Clean and Rebuild**
+```bash
+cd android
+./gradlew clean
+rm -rf .gradle
+./gradlew assembleDebug --stacktrace
+```
+
+**Step 5: If still failing, regenerate Android project**
+```bash
+rm -rf android
+npx cap add android
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+### Other Common Issues
+
 ### Common Issues
 
 **Build Fails**
