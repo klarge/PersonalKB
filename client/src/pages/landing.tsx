@@ -1,8 +1,58 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, PenTool, Search, Server, Users, Shield, Network } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Landing() {
+  const [authMethod, setAuthMethod] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check which authentication method is available
+    fetch("/api/health")
+      .then(res => res.json())
+      .then(() => {
+        // Try to detect auth method by checking for specific endpoints
+        fetch("/api/auth/user", { credentials: "include" })
+          .then(res => {
+            if (res.status === 401) {
+              setAuthMethod("local"); // Local auth returns 401 for unauthenticated users
+            }
+          })
+          .catch(() => {
+            setAuthMethod("external"); // External auth (Google/Replit) available
+          });
+      })
+      .catch(() => {
+        setAuthMethod("external");
+      });
+  }, []);
+
+  const getAuthButton = () => {
+    if (authMethod === "local") {
+      return (
+        <Link href="/auth">
+          <Button 
+            size="lg"
+            className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
+          >
+            Get Started
+          </Button>
+        </Link>
+      );
+    } else {
+      return (
+        <Button 
+          size="lg"
+          onClick={() => window.location.href = "/api/login"}
+          className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
+        >
+          Start Your Journey
+        </Button>
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral">
       {/* Hero Section */}
@@ -19,13 +69,7 @@ export default function Landing() {
               Your personal knowledge management system with journaling, backlinking, and mindmap features. 
               Capture thoughts, connect ideas, and visualize your knowledge.
             </p>
-            <Button 
-              size="lg"
-              onClick={() => window.location.href = "/api/login"}
-              className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
-            >
-              Start Your Journey
-            </Button>
+            {getAuthButton()}
           </div>
         </div>
       </div>

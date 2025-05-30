@@ -9,6 +9,33 @@ import { storage } from "./storage";
 
 // Simple local authentication for self-hosted deployments
 export function setupLocalAuth(app: Express) {
+  // Setup session store using PostgreSQL
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+
+  const sessionSettings: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET || crypto.randomUUID(),
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: sessionTtl,
+    },
+  };
+
+  app.set("trust proxy", 1);
+  app.use(session(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   // Local strategy for username/password authentication
   passport.use(new LocalStrategy(
     { usernameField: 'email' },
@@ -45,12 +72,12 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Login route
-  app.post('/api/auth/login', passport.authenticate('local'), (req, res) => {
-    res.json({ user: req.user, message: 'Login successful' });
+  app.post('/api/login', passport.authenticate('local'), (req, res) => {
+    res.json(req.user);
   });
 
   // Register route
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/register', async (req, res) => {
     try {
       const { email, password, firstName, lastName } = req.body;
 
@@ -76,7 +103,7 @@ export function setupLocalAuth(app: Express) {
         if (err) {
           return res.status(500).json({ message: 'Login failed after registration' });
         }
-        res.status(201).json({ user, message: 'Registration successful' });
+        res.status(201).json(user);
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -85,12 +112,12 @@ export function setupLocalAuth(app: Express) {
   });
 
   // Logout route
-  app.post('/api/auth/logout', (req, res) => {
+  app.post('/api/logout', (req, res) => {
     req.logout((err) => {
       if (err) {
         return res.status(500).json({ message: 'Logout failed' });
       }
-      res.json({ message: 'Logout successful' });
+      res.sendStatus(200);
     });
   });
 }
