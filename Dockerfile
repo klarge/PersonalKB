@@ -34,6 +34,7 @@ RUN mkdir -p /app/backups
 
 # Copy built application and dependencies
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
