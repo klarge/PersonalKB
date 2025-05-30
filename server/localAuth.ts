@@ -9,32 +9,41 @@ import { storage } from "./storage";
 
 // Simple local authentication for self-hosted deployments
 export function setupLocalAuth(app: Express) {
-  // Setup session store using PostgreSQL
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  // Prevent duplicate setup
+  if (app.get('local-auth-configured')) {
+    return;
+  }
+  
+  // Only setup session if it hasn't been set up already (by other auth methods)
+  if (!app.get('session-configured')) {
+    // Setup session store using PostgreSQL
+    const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+    const pgStore = connectPg(session);
+    const sessionStore = new pgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: false,
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
 
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || crypto.randomUUID(),
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: sessionTtl,
-    },
-  };
+    const sessionSettings: session.SessionOptions = {
+      secret: process.env.SESSION_SECRET || crypto.randomUUID(),
+      store: sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: sessionTtl,
+      },
+    };
 
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
+    app.set("trust proxy", 1);
+    app.use(session(sessionSettings));
+    app.use(passport.initialize());
+    app.use(passport.session());
+    app.set('session-configured', true);
+  }
 
   // Local strategy for username/password authentication
   passport.use(new LocalStrategy(
@@ -95,6 +104,22 @@ export function setupLocalAuth(app: Express) {
     try {
       const { email, password, firstName, lastName } = req.body;
 
+      // Validate required fields
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+      }
+
+      // Validate password length
+      if (password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters' });
+      }
+
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -115,13 +140,17 @@ export function setupLocalAuth(app: Express) {
       // Log them in
       req.login(user, (err) => {
         if (err) {
-          return res.status(500).json({ message: 'Login failed after registration' });
+          console.error('Login after registration failed:', err);
+          return res.status(500).json({ message: 'Registration successful but login failed' });
         }
         res.status(201).json(user);
       });
     } catch (error) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: 'Registration failed' });
+      res.status(500).json({ 
+        message: 'Registration failed', 
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      });
     }
   });
 
@@ -134,4 +163,7 @@ export function setupLocalAuth(app: Express) {
       res.sendStatus(200);
     });
   });
+
+  // Mark local auth as configured
+  app.set('local-auth-configured', true);
 }
