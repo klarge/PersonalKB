@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ type RegisterData = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("login");
 
   const loginForm = useForm<LoginData>({
@@ -60,8 +61,8 @@ export default function AuthPage() {
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      // Force a page refresh to ensure proper routing
-      window.location.href = "/";
+      // Navigate to home page using router
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
@@ -88,8 +89,8 @@ export default function AuthPage() {
         title: "Account created!",
         description: "Welcome to Personal KB. You're now logged in.",
       });
-      // Force a page refresh to ensure proper routing
-      window.location.href = "/";
+      // Navigate to home page using router
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
