@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.8.10'
+    ext.kotlin_version = '1.7.20'
     
     repositories {
         google()
@@ -26,13 +26,8 @@ allprojects {
     }
 }
 
-// Configure Java and Kotlin version for all projects
+// Configure Java version for all projects
 subprojects {
-    // Apply Kotlin plugin to all subprojects that need it
-    if (project.name.startsWith('capacitor')) {
-        apply plugin: 'kotlin-android'
-    }
-    
     afterEvaluate {
         if (project.hasProperty('android')) {
             android {
@@ -40,13 +35,6 @@ subprojects {
                     sourceCompatibility JavaVersion.VERSION_17
                     targetCompatibility JavaVersion.VERSION_17
                 }
-            }
-        }
-        
-        // Configure Kotlin compilation for all tasks
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-            kotlinOptions {
-                jvmTarget = '17'
             }
         }
     }
