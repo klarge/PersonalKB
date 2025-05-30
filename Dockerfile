@@ -15,8 +15,9 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies after building
+# Remove dev dependencies after building, but keep vite and nanoid for runtime
 RUN npm prune --production
+RUN npm install vite nanoid
 
 # Production stage
 FROM node:18-alpine AS production
