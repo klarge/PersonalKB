@@ -90,18 +90,245 @@ This application is designed to work seamlessly with Replit Deployments:
 
 ### Self-Hosting
 
-For self-hosting on your own infrastructure:
+Personal KB offers multiple self-hosting options to fit your infrastructure needs:
 
-1. Build the application:
+#### Option 1: Docker (Recommended)
+
+The easiest way to self-host Personal KB with automatic builds and container orchestration.
+
+**Using Pre-built Images:**
 ```bash
-npm run build
+# Create deployment directory
+mkdir personal-kb && cd personal-kb
+
+# Download docker-compose configuration
+curl -o docker-compose.yml https://raw.githubusercontent.com/yourusername/personal-kb/main/docker-compose.yml
+
+# Create environment file
+cat > .env << EOF
+# Database Configuration
+DATABASE_URL=postgresql://postgres:your_secure_password@postgres:5432/personalkb
+POSTGRES_DB=personalkb
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password
+
+# Application Configuration
+SESSION_SECRET=$(openssl rand -hex 32)
+NODE_ENV=production
+
+# Auth Configuration (replace with your values)
+REPL_ID=your_repl_id
+REPLIT_DOMAINS=your-domain.com
+ISSUER_URL=https://replit.com/oidc
+EOF
+
+# Start the application
+docker-compose up -d
+
+# Initialize database
+docker-compose exec personal-kb npm run db:push
 ```
 
-2. Set up a PostgreSQL database
-3. Configure environment variables
-4. Start the production server:
+**Building from Source:**
 ```bash
-npm start
+# Clone the repository
+git clone https://github.com/yourusername/personal-kb.git
+cd personal-kb
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Build and start
+docker-compose up -d --build
+
+# Initialize database
+docker-compose exec personal-kb npm run db:push
+```
+
+**Docker Benefits:**
+- Automatic container orchestration with PostgreSQL
+- Built-in health checks and restart policies
+- Easy updates and scaling
+- Isolated environment with proper security
+- Volume persistence for data and uploads
+
+#### Option 2: Manual Installation
+
+For direct installation on your server:
+
+1. **Prerequisites:**
+   ```bash
+   # Install Node.js 18+
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   
+   # Install PostgreSQL
+   sudo apt-get install postgresql postgresql-contrib
+   ```
+
+2. **Application Setup:**
+   ```bash
+   # Clone and build
+   git clone https://github.com/yourusername/personal-kb.git
+   cd personal-kb
+   npm install
+   npm run build
+   ```
+
+3. **Database Configuration:**
+   ```bash
+   # Create database and user
+   sudo -u postgres createdb personalkb
+   sudo -u postgres createuser --interactive
+   ```
+
+4. **Environment Configuration:**
+   ```bash
+   # Create production environment file
+   cat > .env << EOF
+   DATABASE_URL=postgresql://username:password@localhost:5432/personalkb
+   SESSION_SECRET=$(openssl rand -hex 32)
+   NODE_ENV=production
+   REPL_ID=your_repl_id
+   REPLIT_DOMAINS=your-domain.com
+   EOF
+   ```
+
+5. **Database Initialization:**
+   ```bash
+   npm run db:push
+   ```
+
+6. **Start the Server:**
+   ```bash
+   # Development
+   npm run dev
+   
+   # Production
+   npm start
+   ```
+
+#### Option 3: Reverse Proxy Setup (Production)
+
+For production deployments, use nginx as a reverse proxy:
+
+**Nginx Configuration (`/etc/nginx/sites-available/personal-kb`):**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # Serve uploaded files directly
+    location /uploads/ {
+        alias /path/to/personal-kb/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+**SSL with Certbot:**
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+#### System Service (systemd)
+
+Create a systemd service for automatic startup:
+
+**`/etc/systemd/system/personal-kb.service`:**
+```ini
+[Unit]
+Description=Personal KB Knowledge Management
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/path/to/personal-kb
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**Enable and start:**
+```bash
+sudo systemctl enable personal-kb
+sudo systemctl start personal-kb
+sudo systemctl status personal-kb
+```
+
+#### Environment Variables Reference
+
+**Required:**
+- `DATABASE_URL`: PostgreSQL connection string
+- `SESSION_SECRET`: Random string for session encryption
+- `NODE_ENV`: Set to "production" for production deployments
+
+**Authentication (Replit Auth):**
+- `REPL_ID`: Your Replit application ID
+- `REPLIT_DOMAINS`: Comma-separated list of allowed domains
+- `ISSUER_URL`: OAuth issuer URL (default: https://replit.com/oidc)
+
+**Optional:**
+- `PORT`: Server port (default: 5000)
+- `UPLOAD_DIR`: Directory for file uploads (default: ./uploads)
+
+#### Monitoring and Maintenance
+
+**Health Check:**
+```bash
+curl http://localhost:5000/api/health
+```
+
+**Database Backup:**
+```bash
+# Docker deployment
+docker-compose exec postgres pg_dump -U postgres personalkb > backup.sql
+
+# Manual installation
+pg_dump personalkb > backup.sql
+```
+
+**Log Monitoring:**
+```bash
+# Docker logs
+docker-compose logs -f personal-kb
+
+# systemd logs
+journalctl -u personal-kb -f
+```
+
+**Updates:**
+```bash
+# Docker deployment
+docker-compose pull
+docker-compose up -d
+
+# Manual installation
+git pull
+npm install
+npm run build
+npm run db:push
+sudo systemctl restart personal-kb
 ```
 
 ## Usage
