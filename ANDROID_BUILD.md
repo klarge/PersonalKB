@@ -234,9 +234,34 @@ cd android
 ./gradlew assembleDebug
 ```
 
-### Other Common Issues
+### Memory and Gradle Daemon Issues
 
-### Common Issues
+If you see "unable to start the daemon process" or "OutOfMemoryError":
+
+**Fix Gradle Memory Allocation:**
+```bash
+# Edit android/gradle.properties and ensure these settings:
+org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m
+org.gradle.daemon=true
+org.gradle.parallel=true
+```
+
+**Stop existing Gradle daemons:**
+```bash
+cd android
+./gradlew --stop
+./gradlew clean
+./gradlew assembleDebug
+```
+
+**If build still fails, try sequential commands:**
+```bash
+cd android
+./gradlew clean --no-daemon
+./gradlew assembleDebug --no-daemon --stacktrace
+```
+
+### Other Common Issues
 
 **Build Fails**
 - Ensure Java 17 is installed and set as JAVA_HOME
