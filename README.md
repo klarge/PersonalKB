@@ -116,10 +116,11 @@ POSTGRES_PASSWORD=your_secure_password
 SESSION_SECRET=$(openssl rand -hex 32)
 NODE_ENV=production
 
-# Auth Configuration (replace with your values)
-REPL_ID=your_repl_id
-REPLIT_DOMAINS=your-domain.com
-ISSUER_URL=https://replit.com/oidc
+# Authentication Configuration (Optional - only needed if using Replit Auth)
+# Leave these blank to use local authentication instead
+# REPL_ID=your_repl_id
+# REPLIT_DOMAINS=your-domain.com
+# ISSUER_URL=https://replit.com/oidc
 EOF
 
 # Start the application
@@ -283,10 +284,16 @@ sudo systemctl status personal-kb
 - `SESSION_SECRET`: Random string for session encryption
 - `NODE_ENV`: Set to "production" for production deployments
 
-**Authentication (Replit Auth):**
-- `REPL_ID`: Your Replit application ID
-- `REPLIT_DOMAINS`: Comma-separated list of allowed domains
-- `ISSUER_URL`: OAuth issuer URL (default: https://replit.com/oidc)
+**Authentication:**
+
+The application currently uses Replit Auth for authentication. For self-hosted deployments, you have two options:
+
+1. **Use Replit Auth (if you have a Replit account):**
+   - `REPL_ID`: Your Replit application ID
+   - `REPLIT_DOMAINS`: Comma-separated list of allowed domains
+   - `ISSUER_URL`: OAuth issuer URL (default: https://replit.com/oidc)
+
+2. **Self-hosted authentication:** Currently requires Replit Auth. A local authentication system for completely independent deployments is planned for future releases.
 
 **Optional:**
 - `PORT`: Server port (default: 5000)
