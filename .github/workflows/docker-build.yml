@@ -1,0 +1,156 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Docker buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Generate deployment manifest
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        mkdir -p deployment
+        cat > deployment/docker-compose.yml << EOF
+        version: '3.8'
+        services:
+          personal-kb:
+            image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            container_name: personal-kb
+            restart: unless-stopped
+            ports:
+              - "5000:5000"
+            environment:
+              - NODE_ENV=production
+              - DATABASE_URL=\${DATABASE_URL}
+              - SESSION_SECRET=\${SESSION_SECRET}
+              - REPL_ID=\${REPL_ID}
+              - REPLIT_DOMAINS=\${REPLIT_DOMAINS}
+              - ISSUER_URL=\${ISSUER_URL:-https://replit.com/oidc}
+            volumes:
+              - uploads:/app/uploads
+            depends_on:
+              - postgres
+
+          postgres:
+            image: postgres:15-alpine
+            container_name: personal-kb-db
+            restart: unless-stopped
+            environment:
+              - POSTGRES_DB=\${POSTGRES_DB:-personalkb}
+              - POSTGRES_USER=\${POSTGRES_USER:-postgres}
+              - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
+            volumes:
+              - postgres_data:/var/lib/postgresql/data
+            ports:
+              - "5432:5432"
+
+        volumes:
+          postgres_data:
+          uploads:
+        EOF
+
+        cat > deployment/.env.example << EOF
+        # Database Configuration
+        DATABASE_URL=postgresql://postgres:your_password@postgres:5432/personalkb
+        POSTGRES_DB=personalkb
+        POSTGRES_USER=postgres
+        POSTGRES_PASSWORD=your_secure_password
+
+        # Application Configuration
+        SESSION_SECRET=your_very_long_random_secret_key
+        NODE_ENV=production
+
+        # Replit Auth Configuration (if using Replit Auth)
+        REPL_ID=your_repl_id
+        REPLIT_DOMAINS=your-domain.com
+        ISSUER_URL=https://replit.com/oidc
+        EOF
+
+        cat > deployment/README.md << EOF
+        # Personal KB Docker Deployment
+
+        ## Quick Start
+
+        1. Copy the environment file and configure it:
+           \`\`\`bash
+           cp .env.example .env
+           # Edit .env with your configuration
+           \`\`\`
+
+        2. Start the application:
+           \`\`\`bash
+           docker-compose up -d
+           \`\`\`
+
+        3. Run database migrations:
+           \`\`\`bash
+           docker-compose exec personal-kb npm run db:push
+           \`\`\`
+
+        ## Access
+
+        - Application: http://localhost:5000
+        - Database: localhost:5432
+
+        ## Configuration
+
+        Edit the .env file with your specific configuration values.
+        See .env.example for all available options.
+        EOF
+
+    - name: Upload deployment files
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-deployment
+        path: deployment/
