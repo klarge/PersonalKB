@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
 import crypto from "crypto";
 import { insertEntrySchema } from "@shared/schema";
 import multer from "multer";
@@ -35,21 +34,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Define authentication middleware variable
+  let isAuthenticated: any;
+
   // Setup authentication based on available environment variables
   if (process.env.REPL_ID && process.env.REPLIT_DOMAINS) {
     // Use Replit Auth if configured
-    const { setupAuth } = await import("./replitAuth");
+    const { setupAuth, isAuthenticated: replitAuth } = await import("./replitAuth");
     await setupAuth(app);
+    isAuthenticated = replitAuth;
   } else if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     // Use Google Auth if configured
     const { setupGoogleAuth } = await import("./googleAuth");
     setupGoogleAuth(app);
+    // Google auth provides its own middleware, we'll need to define it
+    isAuthenticated = (req: any, res: any, next: any) => {
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        return next();
+      }
+      res.status(401).json({ message: "Unauthorized" });
+    };
   } else {
     // No authentication configured - single user mode
     console.warn("No authentication configured. Running in single-user mode.");
     app.use((req: any, res, next) => {
-      // Mock user for single-user mode
+      // Set user for single-user mode
       req.user = { 
+        claims: { sub: "single-user" },
         id: "single-user", 
         email: "user@localhost", 
         firstName: "User", 
@@ -58,6 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.isAuthenticated = () => true;
       next();
     });
+    // Single user mode middleware - always allow access
+    isAuthenticated = (req: any, res: any, next: any) => next();
   }
 
   // Auth routes
