@@ -14,6 +14,8 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
+  console.log(`API Request: ${method} ${fullUrl}`);
+  
   const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -21,6 +23,7 @@ export async function apiRequest(
     credentials: "include",
   });
 
+  console.log(`API Response: ${res.status} ${res.statusText}`);
   await throwIfResNotOk(res);
   return res;
 }

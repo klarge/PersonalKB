@@ -48,14 +48,20 @@ export default function ServerConfig() {
       const urlObj = new URL(url);
       
       // Test connection to the server
+      console.log(`Testing connection to: ${url}/api/health`);
       const response = await fetch(`${url}/api/health`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
 
+      console.log(`Response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error("Server is not responding correctly");
+        throw new Error(`Server responded with status ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log("Health check response:", data);
 
       // Save the URL
       localStorage.setItem("serverUrl", url);
