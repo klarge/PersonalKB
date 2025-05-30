@@ -129,8 +129,8 @@ export function setupLocalAuth(app: Express) {
       }
 
       console.log('Hashing password...');
-      // Hash password with lower rounds to avoid timeout issues in Docker
-      const passwordHash = await bcrypt.hash(password, 10);
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 12);
 
       console.log('Creating user...');
       // Create user
