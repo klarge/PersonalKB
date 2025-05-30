@@ -55,10 +55,13 @@ export default function AuthPage() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
+      // Force a page refresh to ensure proper routing
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       toast({
@@ -80,10 +83,13 @@ export default function AuthPage() {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Account created!",
         description: "Welcome to Personal KB. You're now logged in.",
       });
+      // Force a page refresh to ensure proper routing
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       toast({
