@@ -74,10 +74,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     setupLocalAuth(app);
   }
 
+  // Ensure we have a consistent authentication middleware
+  if (!isAuthenticated) {
+    isAuthenticated = (req: any, res: any, next: any) => {
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        return next();
+      }
+      res.status(401).json({ message: "Unauthorized" });
+    };
+  }
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Handle different auth formats
+      let userId;
+      if (req.user.claims?.sub) {
+        // Replit Auth format
+        userId = req.user.claims.sub;
+      } else {
+        // Local Auth format - user object is stored directly
+        userId = req.user.id;
+      }
+      
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
