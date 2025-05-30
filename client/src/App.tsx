@@ -21,6 +21,11 @@ import { Capacitor } from "@capacitor/core";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Check if running on Android and server URL is not configured
+  if (Capacitor.isNativePlatform() && !ServerConfigUtil.isConfigured()) {
+    return <ServerConfig />;
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral">
