@@ -9,13 +9,20 @@ This guide will help you build the Personal KB knowledge management app as a nat
 **Option 1: Android Studio (Recommended)**
 1. Install [Android Studio](https://developer.android.com/studio)
 2. Install Android SDK (API level 33 or higher)
-3. Install Java 17 or higher
+3. Install Java 17 (exactly version 17 - required for compatibility)
 4. Install Node.js 18 or higher
 
 **Option 2: Command Line Tools**
 1. Install [Android SDK Command Line Tools](https://developer.android.com/studio/command-line)
-2. Install Java 17 or higher
+2. Install Java 17 (exactly version 17 - required for compatibility)
 3. Install Node.js 18 or higher
+
+**Important Java Version Note:**
+The Android build requires exactly Java 17. If you have multiple Java versions installed:
+- Check your version: `java -version`
+- Set JAVA_HOME if needed: `export JAVA_HOME=/path/to/java-17`
+- On Ubuntu/Debian: `sudo apt install openjdk-17-jdk`
+- On macOS with Homebrew: `brew install openjdk@17`
 
 ## Building the APK
 
