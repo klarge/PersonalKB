@@ -24,6 +24,17 @@ const upload = multer({
   },
 });
 
+// Helper function to get user ID from different auth formats
+function getUserId(req: any): string {
+  if (req.user.claims?.sub) {
+    // Replit Auth format
+    return getUserId(req);
+  } else {
+    // Local Auth format - user object is stored directly
+    return req.user.id;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
@@ -87,16 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      // Handle different auth formats
-      let userId;
-      if (req.user.claims?.sub) {
-        // Replit Auth format
-        userId = req.user.claims.sub;
-      } else {
-        // Local Auth format - user object is stored directly
-        userId = req.user.id;
-      }
-      
+      const userId = getUserId(req);
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -108,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Entry routes
   app.get("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -123,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get entries for autocomplete (hashtag suggestions)
   app.get("/api/entries/autocomplete", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const entries = await storage.getAllEntriesForAutocomplete(userId);
       res.json(entries);
     } catch (error) {
@@ -135,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get backlinks for an entry (entries that reference this one)
   app.get("/api/entries/backlinks/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const entryId = parseInt(req.params.id);
       
       if (isNaN(entryId)) {
@@ -161,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Today's journal route (must come before /:id route)
   app.get("/api/entries/today", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const today = new Date();
       let entry = await storage.getEntryByDate(userId, today);
 
@@ -207,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user owns this entry
-      if (entry.userId !== req.user.claims.sub) {
+      if (entry.userId !== getUserId(req)) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -224,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new entry
   app.post("/api/entries", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const { title, content, type } = req.body;
 
       if (!title) {
@@ -249,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quick note creation endpoint
   app.post("/api/notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const { title, content } = req.body;
 
       if (!title || !content) {
@@ -285,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Entry not found" });
       }
 
-      if (existingEntry.userId !== req.user.claims.sub) {
+      if (existingEntry.userId !== getUserId(req)) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -313,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Entry not found" });
       }
 
-      if (existingEntry.userId !== req.user.claims.sub) {
+      if (existingEntry.userId !== getUserId(req)) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -328,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search entries
   app.get("/api/search", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const query = req.query.q as string;
       const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
 
@@ -347,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Autocomplete entries for backlinking
   app.get("/api/entries/autocomplete", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const entries = await storage.getAllEntriesForAutocomplete(userId);
       res.json(entries);
     } catch (error) {
@@ -359,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Token management routes
   app.get("/api/tokens", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const tokens = await storage.getApiTokensByUser(userId);
       res.json(tokens);
     } catch (error) {
@@ -370,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tokens", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const { name } = req.body;
 
       if (!name || name.trim().length === 0) {
@@ -395,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/tokens/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const tokenId = parseInt(req.params.id);
 
       // Get the token to verify ownership
@@ -448,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API-only routes (for external access)
   app.get("/api/v1/entries", authenticateApiToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const type = req.query.type as "journal" | "note" | "person" | "place" | "thing" | undefined;
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
@@ -463,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/v1/entries", authenticateApiToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const entryData = { ...req.body, userId };
 
       // Validate required fields
@@ -588,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export entries as individual markdown files in a zip
   app.get("/api/export/markdown", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const entries = await storage.getEntriesByUser(userId);
       
       const zipBuffer = await createExportZip(entries, userId);

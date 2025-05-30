@@ -1,0 +1,154 @@
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+10:07:53 PM [express] GET /api/entries/today 500 in 54ms :: {"message":"Failed to fetch today's entry…
+
+10:07:53 PM [express] GET /api/health 200 in 0ms :: {"status":"healthy","timestamp":"2025-05-30T22:07…
+
+10:08:24 PM [express] GET /api/health 200 in 0ms :: {"status":"healthy","timestamp":"2025-05-30T22:08…
+
+10:08:54 PM [express] GET /api/health 200 in 0ms :: {"status":"healthy","timestamp":"2025-05-30T22:08…
+
+10:09:24 PM [express] GET /api/health 200 in 0ms :: {"status":"healthy","timestamp":"2025-05-30T22:09…
+
+10:09:54 PM [express] GET /api/health 200 in 1ms :: {"status":"healthy","timestamp":"2025-05-30T22:09…
+
+10:10:24 PM [express] GET /api/health 200 in 1ms :: {"status":"healthy","timestamp":"2025-05-30T22:10…
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+Error fetching entries: TypeError: Cannot read properties of undefined (reading 'sub')
+
+    at file:///app/dist/index.js:819:38
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at isAuthenticated2 (file:///app/dist/index.js:784:16)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at next (/app/node_modules/express/lib/router/route.js:149:13)
+
+    at Route.dispatch (/app/node_modules/express/lib/router/route.js:119:3)
+
+    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)
+
+    at /app/node_modules/express/lib/router/index.js:284:15
+
+    at Function.process_params (/app/node_modules/express/lib/router/index.js:346:12)
+
+10:10:28 PM [express] GET /api/entries 500 in 115ms :: {"message":"Failed to fetch entries"}
+
+10:10:28 PM [express] GET /api/entries 500 in 126ms :: {"message":"Failed to fetch entries"}
+
+10:10:28 PM [express] GET /api/entries 500 in 142ms :: {"message":"Failed to fetch entries"}
+
