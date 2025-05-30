@@ -234,30 +234,45 @@ cd android
 ./gradlew assembleDebug
 ```
 
-### Memory and Gradle Daemon Issues
+### Kotlin/Java Compatibility Issues
 
-If you see "unable to start the daemon process" or "OutOfMemoryError":
+If you see "Inconsistent JVM-target compatibility detected":
 
-**Fix Gradle Memory Allocation:**
-```bash
-# Edit android/gradle.properties and ensure these settings:
-org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m
-org.gradle.daemon=true
-org.gradle.parallel=true
+This happens when Java and Kotlin target different JVM versions. The build files are already configured to fix this, but if you encounter this error:
+
+**Verify Kotlin configuration in android/app/build.gradle:**
+```gradle
+compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+}
+
+kotlinOptions {
+    jvmTarget = '17'
+}
 ```
 
-**Stop existing Gradle daemons:**
+**Clean and rebuild:**
 ```bash
 cd android
-./gradlew --stop
 ./gradlew clean
 ./gradlew assembleDebug
 ```
 
-**If build still fails, try sequential commands:**
+### Memory and Gradle Daemon Issues
+
+If you see "unable to start the daemon process" or "OutOfMemoryError":
+
+**The gradle.properties is already configured with optimal settings:**
+```bash
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+org.gradle.daemon=false
+```
+
+**If build still fails, try:**
 ```bash
 cd android
-./gradlew clean --no-daemon
+./gradlew clean --no-daemon --stacktrace
 ./gradlew assembleDebug --no-daemon --stacktrace
 ```
 
