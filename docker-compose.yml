@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   personal-kb:
-    image: ghcr.io/yourusername/personal-kb:latest
+    image: ghcr.io/klarge/personalkb:latest
     # Uncomment the line below if you want to build from source instead
     # build: .
     container_name: personal-kb

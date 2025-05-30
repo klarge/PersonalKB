@@ -102,7 +102,7 @@ The easiest way to self-host Personal KB with automatic builds and container orc
 mkdir personal-kb && cd personal-kb
 
 # Download docker-compose configuration
-curl -o docker-compose.yml https://raw.githubusercontent.com/yourusername/personal-kb/main/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/klarge/personalkb/main/docker-compose.yml
 
 # Create environment file
 cat > .env << EOF
@@ -144,8 +144,8 @@ docker-compose exec personal-kb npm run db:push
 **Building from Source:**
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/personal-kb.git
-cd personal-kb
+git clone https://github.com/klarge/personalkb.git
+cd personalkb
 
 # Configure environment
 cp .env.example .env
@@ -182,8 +182,8 @@ For direct installation on your server:
 2. **Application Setup:**
    ```bash
    # Clone and build
-   git clone https://github.com/yourusername/personal-kb.git
-   cd personal-kb
+   git clone https://github.com/klarge/personalkb.git
+   cd personalkb
    npm install
    npm run build
    ```
