@@ -6,13 +6,13 @@ import {
   entryTags,
   images,
   type User,
-  type UpsertUser,
   type ApiToken,
   type InsertApiToken,
   type Entry,
   type InsertEntry,
   type Tag,
   type InsertTag,
+  type EntryTag,
   type Image,
   type InsertImage,
 } from "@shared/schema";
@@ -24,20 +24,16 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  createGoogleUser(userData: {
-    googleId: string;
+  createUser(user: {
     email: string;
     firstName: string;
     lastName: string;
+    passwordHash?: string;
+    googleId?: string;
+    githubId?: string;
     profileImageUrl?: string;
   }): Promise<User>;
-  createLocalUser(userData: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    passwordHash: string;
-  }): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
   
   // API Token operations
   createApiToken(token: InsertApiToken): Promise<ApiToken>;
@@ -70,7 +66,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations (mandatory for Replit Auth)
+  // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -81,56 +77,27 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
-  }
-
-  async createGoogleUser(userData: {
-    googleId: string;
+  async createUser(userData: {
     email: string;
     firstName: string;
     lastName: string;
+    passwordHash?: string;
+    googleId?: string;
+    githubId?: string;
     profileImageUrl?: string;
   }): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values({
-        id: userData.googleId,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        profileImageUrl: userData.profileImageUrl,
-      })
+      .values(userData)
       .returning();
     return user;
   }
 
-  async createLocalUser(userData: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    passwordHash: string;
-  }): Promise<User> {
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
     const [user] = await db
-      .insert(users)
-      .values({
-        id: crypto.randomUUID(),
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        passwordHash: userData.passwordHash,
-      })
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
@@ -153,11 +120,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getApiTokenByToken(token: string): Promise<ApiToken | undefined> {
-    const [result] = await db
+    const [apiToken] = await db
       .select()
       .from(apiTokens)
       .where(eq(apiTokens.token, token));
-    return result;
+    return apiToken;
   }
 
   async deleteApiToken(id: number): Promise<void> {
@@ -173,24 +140,28 @@ export class DatabaseStorage implements IStorage {
 
   // Entry operations
   async getEntriesByUser(userId: string, type?: "journal" | "note" | "person" | "place" | "thing", limit: number = 20, offset: number = 0): Promise<Entry[]> {
-    const conditions = [eq(entries.userId, userId)];
-    if (type) {
-      conditions.push(eq(entries.type, type));
-    }
-    
-    return await db
+    let query = db
       .select()
       .from(entries)
-      .where(and(...conditions))
-      .orderBy(desc(entries.date))
+      .where(eq(entries.userId, userId))
+      .orderBy(desc(entries.createdAt))
       .limit(limit)
       .offset(offset);
+
+    if (type) {
+      query = db
+        .select()
+        .from(entries)
+        .where(and(eq(entries.userId, userId), eq(entries.type, type)))
+        .orderBy(desc(entries.createdAt))
+        .limit(limit)
+        .offset(offset);
+    }
+
+    return await query;
   }
 
   async getEntryById(id: number): Promise<Entry | undefined> {
-    if (!id || isNaN(id)) {
-      return undefined;
-    }
     const [entry] = await db.select().from(entries).where(eq(entries.id, id));
     return entry;
   }
@@ -208,25 +179,19 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(entries.userId, userId),
           eq(entries.type, "journal"),
-          sql`${entries.date} >= ${startOfDay}`,
-          sql`${entries.date} <= ${endOfDay}`
+          sql`${entries.createdAt} >= ${startOfDay}`,
+          sql`${entries.createdAt} <= ${endOfDay}`
         )
       );
     return entry;
   }
 
   async createEntry(entry: InsertEntry): Promise<Entry> {
-    const [newEntry] = await db
-      .insert(entries)
-      .values({
-        ...entry,
-        date: entry.date || new Date(),
-      })
-      .returning();
+    const [newEntry] = await db.insert(entries).values(entry).returning();
     
-    // Process hashtags in content
-    if (entry.content) {
-      await this.processHashtags(newEntry.id, entry.content);
+    // Process hashtags
+    if (newEntry.content) {
+      await this.processHashtags(newEntry.id, newEntry.content);
     }
     
     return newEntry;
@@ -235,43 +200,46 @@ export class DatabaseStorage implements IStorage {
   async updateEntry(id: number, entry: Partial<InsertEntry>): Promise<Entry> {
     const [updatedEntry] = await db
       .update(entries)
-      .set({
-        ...entry,
-        updatedAt: new Date(),
-      })
+      .set({ ...entry, updatedAt: new Date() })
       .where(eq(entries.id, id))
       .returning();
     
     // Process hashtags if content was updated
     if (entry.content !== undefined) {
-      await this.processHashtags(id, entry.content);
+      await this.processHashtags(id, entry.content || "");
     }
     
     return updatedEntry;
   }
 
   async deleteEntry(id: number): Promise<void> {
+    // Delete related entry tags first
+    await db.delete(entryTags).where(eq(entryTags.entryId, id));
+    // Delete related images
+    await db.delete(images).where(eq(images.entryId, id));
+    // Delete the entry
     await db.delete(entries).where(eq(entries.id, id));
   }
 
   async searchEntries(userId: string, query: string, type?: "journal" | "note" | "person" | "place" | "thing"): Promise<Entry[]> {
-    const conditions = [
+    const searchTerm = `%${query}%`;
+    let whereClause = and(
       eq(entries.userId, userId),
       or(
-        like(entries.title, `%${query}%`),
-        like(entries.content, `%${query}%`)
+        like(entries.title, searchTerm),
+        like(entries.content, searchTerm)
       )
-    ];
-    
+    );
+
     if (type) {
-      conditions.push(eq(entries.type, type));
+      whereClause = and(whereClause, eq(entries.type, type));
     }
-    
+
     return await db
       .select()
       .from(entries)
-      .where(and(...conditions))
-      .orderBy(desc(entries.date));
+      .where(whereClause)
+      .orderBy(desc(entries.createdAt));
   }
 
   async getAllEntriesForAutocomplete(userId: string): Promise<{ id: number; title: string; type: string }[]> {
@@ -283,71 +251,54 @@ export class DatabaseStorage implements IStorage {
       })
       .from(entries)
       .where(eq(entries.userId, userId))
-      .orderBy(desc(entries.updatedAt));
+      .orderBy(entries.title);
   }
 
   async getBacklinksForEntry(userId: string, entryTitle: string): Promise<Entry[]> {
-    // Find entries that contain hashtags referencing the given entry title
-    const hashtag = `#${entryTitle.replace(/\s+/g, '')}`;
-    
-    const backlinks = await db.select()
+    const searchPattern = `%[[${entryTitle}]]%`;
+    return await db
+      .select()
       .from(entries)
       .where(
         and(
           eq(entries.userId, userId),
-          like(entries.content, `%${hashtag}%`)
+          like(entries.content, searchPattern)
         )
       )
-      .orderBy(desc(entries.date));
-    
-    return backlinks;
+      .orderBy(desc(entries.createdAt));
   }
 
   // Tag operations
   async getOrCreateTag(name: string): Promise<Tag> {
-    const cleanName = name.toLowerCase().replace(/^#/, '');
-    
-    // Try to find existing tag
     const [existingTag] = await db
       .select()
       .from(tags)
-      .where(eq(tags.name, cleanName));
-    
+      .where(eq(tags.name, name));
+
     if (existingTag) {
       return existingTag;
     }
-    
-    // Create new tag
+
     const [newTag] = await db
       .insert(tags)
-      .values({ name: cleanName })
+      .values({ name })
       .returning();
-    
     return newTag;
   }
 
   async getTagsByEntry(entryId: number): Promise<Tag[]> {
     return await db
-      .select({
-        id: tags.id,
-        name: tags.name,
-        createdAt: tags.createdAt,
-      })
+      .select(tags)
       .from(tags)
-      .innerJoin(entryTags, eq(entryTags.tagId, tags.id))
+      .innerJoin(entryTags, eq(tags.id, entryTags.tagId))
       .where(eq(entryTags.entryId, entryId));
   }
 
   async addTagToEntry(entryId: number, tagId: number): Promise<void> {
-    // Check if relationship already exists
-    const [existing] = await db
-      .select()
-      .from(entryTags)
-      .where(and(eq(entryTags.entryId, entryId), eq(entryTags.tagId, tagId)));
-    
-    if (!existing) {
-      await db.insert(entryTags).values({ entryId, tagId });
-    }
+    await db
+      .insert(entryTags)
+      .values({ entryId, tagId })
+      .onConflictDoNothing();
   }
 
   async removeTagFromEntry(entryId: number, tagId: number): Promise<void> {
@@ -357,17 +308,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async processHashtags(entryId: number, content: string): Promise<void> {
-    // Remove all existing tags for this entry
+    // Remove existing tags for this entry
     await db.delete(entryTags).where(eq(entryTags.entryId, entryId));
-    
+
     // Extract hashtags from content
-    const hashtagRegex = /#[\w]+/g;
-    const hashtags = content.match(hashtagRegex) || [];
-    
-    // Process each unique hashtag
-    const uniqueHashtags = Array.from(new Set(hashtags));
-    for (const hashtag of uniqueHashtags) {
-      const tag = await this.getOrCreateTag(hashtag);
+    const hashtagRegex = /#(\w+)/g;
+    const matches = content.match(hashtagRegex);
+
+    if (!matches) return;
+
+    const uniqueTags = [...new Set(matches.map(tag => tag.slice(1)))]; // Remove # and deduplicate
+
+    for (const tagName of uniqueTags) {
+      const tag = await this.getOrCreateTag(tagName);
       await this.addTagToEntry(entryId, tag.id);
     }
   }
@@ -379,7 +332,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getImagesByEntry(entryId: number): Promise<Image[]> {
-    return await db.select().from(images).where(eq(images.entryId, entryId));
+    return await db
+      .select()
+      .from(images)
+      .where(eq(images.entryId, entryId))
+      .orderBy(images.createdAt);
   }
 }
 
