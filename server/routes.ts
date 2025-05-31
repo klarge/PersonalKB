@@ -47,6 +47,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupSimpleAuth(app);
 
   // Entry routes (all require authentication)
+  
+  // Get today's journal entry (or create if it doesn't exist)
+  app.get("/api/entries/today", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let entry = await storage.getEntryByDate(userId, today);
+      
+      if (!entry) {
+        // Create today's journal entry if it doesn't exist
+        const todayString = today.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric", 
+          month: "long",
+          day: "numeric"
+        });
+        
+        entry = await storage.createEntry({
+          userId,
+          title: todayString,
+          content: "",
+          type: "journal",
+          date: today,
+          structuredData: {}
+        });
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      console.error("Error fetching today's entry:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get backlinks for an entry
+  app.get("/api/entries/backlinks/:id", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const entryId = parseInt(req.params.id);
+      
+      if (isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid entry ID" });
+      }
+      
+      const entry = await storage.getEntryById(entryId);
+      if (!entry || entry.userId !== userId) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      
+      const backlinks = await storage.getBacklinksForEntry(userId, entry.title);
+      res.json(backlinks);
+    } catch (error: any) {
+      console.error("Error fetching backlinks:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/entries", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -110,6 +169,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(entry);
     } catch (error: any) {
       console.error("Error fetching entry:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Quick note creation endpoint
+  app.post("/api/notes", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { title, content } = req.body;
+      
+      if (!title || !content) {
+        return res.status(400).json({ message: "Title and content are required" });
+      }
+      
+      const entryData = {
+        userId,
+        title: title.trim(),
+        content: content.trim(),
+        type: "note" as const,
+        date: new Date(),
+        structuredData: {}
+      };
+
+      const entry = await storage.createEntry(entryData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error("Error creating note:", error);
       res.status(500).json({ message: error.message });
     }
   });
