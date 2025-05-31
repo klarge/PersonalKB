@@ -1,328 +1,267 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
-import { Redirect, useLocation } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, BookOpen, Users, MapPin, Lightbulb } from "lucide-react";
-
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-});
-
-type LoginData = z.infer<typeof loginSchema>;
-type RegisterData = z.infer<typeof registerSchema>;
+import { BookOpen } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AuthPage() {
-  const { user, isLoading } = useAuth();
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("login");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const loginForm = useForm<LoginData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+  // Check available auth methods
+  const { data: authConfig } = useQuery({
+    queryKey: ["/auth/config"],
+    retry: false,
   });
 
-  const registerForm = useForm<RegisterData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", password: "", firstName: "", lastName: "" },
-  });
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error || "Login failed");
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
       }
-      return await res.json();
-    },
-    onSuccess: (user) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      // Navigate to home page using router
-      setLocation("/");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error || "Registration failed");
-      }
-      return await res.json();
-    },
-    onSuccess: (user) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Account created!",
-        description: "Welcome to Personal KB. You're now logged in.",
-      });
-      // Navigate to home page using router
-      setLocation("/");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Don't call hooks conditionally - all hooks must be called before any early returns
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return <Redirect to="/" />;
-  }
-
-  const onLogin = (data: LoginData) => {
-    loginMutation.mutate(data);
+      window.location.href = "/";
+    } catch (error: any) {
+      setError(error.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const onRegister = (data: RegisterData) => {
-    registerMutation.mutate(data);
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
+
+    try {
+      const response = await fetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Registration failed");
+      }
+
+      window.location.href = "/";
+    } catch (error: any) {
+      setError(error.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex">
-      {/* Left side - Forms */}
+    <div className="min-h-screen flex">
+      {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-              Personal KB
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <div className="flex justify-center">
+              <BookOpen className="h-12 w-12 text-blue-600" />
+            </div>
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+              PersonalKB
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Your personal knowledge management system
             </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Create Account</TabsTrigger>
-            </TabsList>
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome</CardTitle>
+              <CardDescription>
+                Sign in to your account or create a new one
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">Sign In</TabsTrigger>
+                  <TabsTrigger value="register">Sign Up</TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Welcome back</CardTitle>
-                  <CardDescription>
-                    Sign in to your Personal KB account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+                <TabsContent value="login" className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="login-email">Email</Label>
                       <Input
-                        id="email"
+                        id="login-email"
+                        name="email"
                         type="email"
-                        placeholder="your@email.com"
-                        {...loginForm.register("email")}
+                        required
+                        placeholder="Enter your email"
                       />
-                      {loginForm.formState.errors.email && (
-                        <p className="text-sm text-red-500">
-                          {loginForm.formState.errors.email.message}
-                        </p>
-                      )}
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="login-password">Password</Label>
                       <Input
-                        id="password"
+                        id="login-password"
+                        name="password"
                         type="password"
-                        {...loginForm.register("password")}
+                        required
+                        placeholder="Enter your password"
                       />
-                      {loginForm.formState.errors.password && (
-                        <p className="text-sm text-red-500">
-                          {loginForm.formState.errors.password.message}
-                        </p>
-                      )}
                     </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={loginMutation.isPending}
-                    >
-                      {loginMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        "Sign In"
-                      )}
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                </TabsContent>
 
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create your account</CardTitle>
-                  <CardDescription>
-                    Join Personal KB to start organizing your knowledge
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+                <TabsContent value="register" className="space-y-4">
+                  <form onSubmit={handleRegister} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
                         <Input
                           id="firstName"
-                          placeholder="John"
-                          {...registerForm.register("firstName")}
+                          name="firstName"
+                          required
+                          placeholder="First name"
                         />
-                        {registerForm.formState.errors.firstName && (
-                          <p className="text-sm text-red-500">
-                            {registerForm.formState.errors.firstName.message}
-                          </p>
-                        )}
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
                         <Input
                           id="lastName"
-                          placeholder="Doe"
-                          {...registerForm.register("lastName")}
+                          name="lastName"
+                          required
+                          placeholder="Last name"
                         />
-                        {registerForm.formState.errors.lastName && (
-                          <p className="text-sm text-red-500">
-                            {registerForm.formState.errors.lastName.message}
-                          </p>
-                        )}
                       </div>
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="registerEmail">Email</Label>
+                      <Label htmlFor="register-email">Email</Label>
                       <Input
-                        id="registerEmail"
+                        id="register-email"
+                        name="email"
                         type="email"
-                        placeholder="your@email.com"
-                        {...registerForm.register("email")}
+                        required
+                        placeholder="Enter your email"
                       />
-                      {registerForm.formState.errors.email && (
-                        <p className="text-sm text-red-500">
-                          {registerForm.formState.errors.email.message}
-                        </p>
-                      )}
                     </div>
-
                     <div className="space-y-2">
-                      <Label htmlFor="registerPassword">Password</Label>
+                      <Label htmlFor="register-password">Password</Label>
                       <Input
-                        id="registerPassword"
+                        id="register-password"
+                        name="password"
                         type="password"
-                        placeholder="At least 8 characters"
-                        {...registerForm.register("password")}
+                        required
+                        placeholder="Create a password"
                       />
-                      {registerForm.formState.errors.password && (
-                        <p className="text-sm text-red-500">
-                          {registerForm.formState.errors.password.message}
-                        </p>
-                      )}
                     </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={registerMutation.isPending}
-                    >
-                      {registerMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating account...
-                        </>
-                      ) : (
-                        "Create Account"
-                      )}
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                </TabsContent>
+              </Tabs>
+
+              {error && (
+                <div className="mt-4 text-sm text-red-600 dark:text-red-400 text-center">
+                  {error}
+                </div>
+              )}
+
+              {/* OAuth options */}
+              {authConfig && (authConfig.hasGoogle || authConfig.hasGitHub) && (
+                <div className="mt-6 space-y-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    {authConfig.hasGoogle && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.location.href = "/auth/google"}
+                        className="w-full"
+                      >
+                        Continue with Google
+                      </Button>
+                    )}
+                    {authConfig.hasGitHub && (
+                      <Button
+                        variant="outline"
+                        onClick={() => window.location.href = "/auth/github"}
+                        className="w-full"
+                      >
+                        Continue with GitHub
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Right side - Hero section */}
-      <div className="hidden lg:flex flex-1 bg-slate-900 dark:bg-slate-950 items-center justify-center p-8">
-        <div className="max-w-md text-center text-white">
-          <div className="mb-8">
-            <BookOpen className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-            <h2 className="text-2xl font-bold mb-4">
+      {/* Right side - Hero */}
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
+        <div className="flex items-center justify-center p-12">
+          <div className="max-w-md text-center">
+            <h2 className="text-3xl font-bold mb-6">
               Organize Your Knowledge
             </h2>
-            <p className="text-slate-300 mb-6">
-              Personal KB helps you capture, connect, and discover insights from your notes, 
-              journal entries, and personal knowledge.
+            <p className="text-xl opacity-90 mb-8">
+              Create journal entries, notes, and build connections between your ideas with PersonalKB.
             </p>
-          </div>
-
-          <div className="space-y-4 text-left">
-            <div className="flex items-center space-x-3">
-              <BookOpen className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <span className="text-sm">Journal entries with rich text editing</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Lightbulb className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-              <span className="text-sm">Quick notes for capturing ideas</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Users className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <span className="text-sm">Track people, places, and things</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <MapPin className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <span className="text-sm">Connected knowledge with hashtags</span>
-            </div>
+            <ul className="text-left space-y-4">
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
+                Journal entries and quick notes
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
+                Hashtag-based connections
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
+                Full-text search
+              </li>
+              <li className="flex items-center">
+                <div className="w-2 h-2 bg-white rounded-full mr-3"></div>
+                Self-hosted and private
+              </li>
+            </ul>
           </div>
         </div>
       </div>

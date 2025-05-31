@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth-page";
-import AuthTokenPage from "@/pages/auth-token";
 import Home from "@/pages/home";
 import Entry from "@/pages/entry";
 import Search from "@/pages/search";
@@ -41,7 +40,7 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
-          <Route path="/auth" component={AuthTokenPage} />
+          <Route path="/auth" component={AuthPage} />
         </>
       ) : (
         <>
