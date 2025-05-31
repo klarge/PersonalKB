@@ -29,14 +29,14 @@ export function setupLocalAuth(app: Express) {
     const sessionSettings: session.SessionOptions = {
       secret: process.env.SESSION_SECRET || crypto.randomUUID(),
       store: sessionStore,
-      resave: false,
-      saveUninitialized: false,
+      resave: true,
+      saveUninitialized: true,
       name: 'connect.sid',
       cookie: {
-        httpOnly: true,
+        httpOnly: false, // Allow JavaScript access for debugging
         secure: false, // Allow cookies over HTTP for local development
         maxAge: sessionTtl,
-        sameSite: 'lax',
+        sameSite: 'lax', // Standard setting for same-site requests
       },
     };
 
@@ -103,20 +103,17 @@ export function setupLocalAuth(app: Express) {
       }
 
       console.log('User authenticated, logging in:', user.id);
-      req.login(user, (err) => {
-        if (err) {
-          console.error('req.login error:', err);
-          return res.status(500).json({ message: 'Login failed' });
+      // Manually set session data
+      (req as any).session.userId = user.id;
+      (req as any).session.user = user;
+      console.log('Login successful, session ID:', req.sessionID);
+      console.log('User ID in session:', user.id);
+      // Force session save to ensure cookie is set
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
         }
-        console.log('Login successful, session ID:', req.sessionID);
-        console.log('User in session:', req.user?.id);
-        // Force session save to ensure cookie is set
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('Session save error:', saveErr);
-          }
-          res.json(user);
-        });
+        res.json(user);
       });
     })(req, res, next);
   });
@@ -164,15 +161,11 @@ export function setupLocalAuth(app: Express) {
       });
 
       console.log('User created, attempting login...');
-      // Log them in
-      req.login(user, (err) => {
-        if (err) {
-          console.error('Login after registration failed:', err);
-          return res.status(500).json({ message: 'Registration successful but login failed' });
-        }
-        console.log('Registration completed successfully');
-        res.status(201).json(user);
-      });
+      // Log them in by manually setting session
+      (req as any).session.userId = user.id;
+      (req as any).session.user = user;
+      console.log('Registration completed successfully, user logged in');
+      res.status(201).json(user);
     } catch (error) {
       console.error('Registration error details:', error);
       res.status(500).json({ 

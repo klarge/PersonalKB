@@ -26,13 +26,19 @@ const upload = multer({
 
 // Helper function to get user ID from different auth formats
 function getUserId(req: any): string {
-  if (req.user.claims?.sub) {
+  // Check manual session first
+  if (req.session?.userId) {
+    return req.session.userId;
+  }
+  // Fallback to passport session
+  if (req.user?.claims?.sub) {
     // Replit Auth format
     return req.user.claims.sub;
-  } else {
+  } else if (req.user?.id) {
     // Local Auth format - user object is stored directly
     return req.user.id;
   }
+  throw new Error('User ID not found in session');
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -72,9 +78,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     setupLocalAuth(app);
     isAuthenticated = (req: any, res: any, next: any) => {
       console.log('Auth check - Session ID:', req.sessionID);
-      console.log('Auth check - User:', req.user?.id);
-      console.log('Auth check - isAuthenticated():', req.isAuthenticated ? req.isAuthenticated() : 'function not available');
-      if (req.isAuthenticated && req.isAuthenticated()) {
+      console.log('Auth check - Session User ID:', req.session?.userId);
+      console.log('Auth check - Passport User:', req.user?.id);
+      
+      // Check both manual session and passport session
+      if ((req.session?.userId) || (req.isAuthenticated && req.isAuthenticated())) {
         return next();
       }
       res.status(401).json({ message: "Unauthorized" });
