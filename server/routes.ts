@@ -6,7 +6,7 @@ import { insertEntrySchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { setupAuth, requireAuth } from "./auth";
+import { setupSimpleAuth, requireSimpleAuth } from "./simple-auth";
 
 // Setup multer for image uploads
 const upload = multer({
@@ -27,10 +27,10 @@ const upload = multer({
 
 // Helper function to get user ID from authenticated session
 function getUserId(req: any): string {
-  if (!req.user) {
+  if (!req.userId) {
     throw new Error('User not authenticated');
   }
-  return req.user.id;
+  return req.userId;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -44,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Setup authentication
-  setupAuth(app);
+  setupSimpleAuth(app);
 
   // Entry routes (all require authentication)
   app.get("/api/entries", requireAuth, async (req, res) => {

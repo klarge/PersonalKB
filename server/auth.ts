@@ -30,8 +30,8 @@ export function setupAuth(app: Express) {
   const PostgresStore = connectPg(session);
   const sessionStore = new PostgresStore({
     pool,
-    createTableIfMissing: true,
-    tableName: "user_sessions"
+    createTableIfMissing: false,
+    tableName: "sessions"
   });
 
   const sessionSettings: session.SessionOptions = {
