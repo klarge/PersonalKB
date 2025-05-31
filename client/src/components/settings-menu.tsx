@@ -7,16 +7,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive } from "lucide-react";
+import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const handleExport = () => {
     const link = document.createElement('a');
@@ -48,6 +50,10 @@ export default function SettingsMenu() {
     backupMutation.mutate();
   };
 
+  const handleSignOut = () => {
+    window.location.href = '/api/logout';
+  };
+
   const getThemeIcon = () => {
     switch (theme) {
       case "dark":
@@ -63,8 +69,8 @@ export default function SettingsMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="px-2">
-          <Settings className="h-4 w-4" />
-          <span className="ml-2 hidden md:inline">Settings</span>
+          <Menu className="h-4 w-4" />
+          <span className="ml-2 hidden md:inline">Menu</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -127,6 +133,16 @@ export default function SettingsMenu() {
           System
           {theme === "system" && <span className="ml-auto">✓</span>}
         </DropdownMenuItem>
+        
+        {isAuthenticated && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
