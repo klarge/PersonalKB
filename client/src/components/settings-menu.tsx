@@ -22,7 +22,7 @@ export default function SettingsMenu() {
 
   const handleExport = () => {
     const link = document.createElement('a');
-    link.href = '/api/export/markdown';
+    link.href = '/api/export/zip';
     link.download = `knowledge-export-${new Date().toISOString().split('T')[0]}.zip`;
     document.body.appendChild(link);
     link.click();

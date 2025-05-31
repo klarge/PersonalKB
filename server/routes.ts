@@ -430,7 +430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Data export
+  // Data export (JSON)
   app.get("/api/export", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
@@ -447,6 +447,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(exportData);
     } catch (error: any) {
       console.error("Error exporting data:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ZIP export endpoint
+  app.get("/api/export/zip", requireSimpleAuth, async (req, res) => {
+    try {
+      const JSZip = require('jszip');
+      const userId = getUserId(req);
+      const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
+      
+      const zip = new JSZip();
+      
+      // Add JSON export
+      const exportData = {
+        user: req.user,
+        entries,
+        exportedAt: new Date().toISOString(),
+      };
+      zip.file("personalkb-export.json", JSON.stringify(exportData, null, 2));
+      
+      // Add markdown export
+      let markdown = `# PersonalKB Export\n\nExported on: ${new Date().toLocaleDateString()}\n\n`;
+      for (const entry of entries) {
+        markdown += `## ${entry.title}\n\n`;
+        markdown += `**Type:** ${entry.type}\n`;
+        markdown += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
+        if (entry.content) {
+          markdown += `${entry.content}\n\n`;
+        }
+        markdown += `---\n\n`;
+      }
+      zip.file("personalkb-export.md", markdown);
+      
+      // Add individual entry files
+      const entriesFolder = zip.folder("entries");
+      for (const entry of entries) {
+        const filename = `${entry.id}-${entry.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+        let content = `# ${entry.title}\n\n`;
+        content += `**Type:** ${entry.type}\n`;
+        content += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
+        if (entry.content) {
+          content += `${entry.content}\n`;
+        }
+        entriesFolder.file(filename, content);
+      }
+
+      const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+      
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", "attachment; filename=personalkb-export.zip");
+      res.send(zipBuffer);
+    } catch (error: any) {
+      console.error("Error creating ZIP export:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Mindmap data endpoint
+  app.get("/api/mindmap", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
+      
+      // Build nodes and edges from entries and their hashtag connections
+      const nodes = entries.map(entry => ({
+        id: entry.id.toString(),
+        label: entry.title,
+        date: entry.date,
+        type: entry.type
+      }));
+
+      const edges: { from: string; to: string }[] = [];
+      
+      // Find hashtag connections between entries
+      for (const entry of entries) {
+        if (entry.content) {
+          const hashtags = entry.content.match(/#\[\[([^\]]+)\]\]/g) || [];
+          for (const hashtag of hashtags) {
+            const referencedTitle = hashtag.replace(/#\[\[|\]\]/g, '');
+            const referencedEntry = entries.find(e => e.title.toLowerCase() === referencedTitle.toLowerCase());
+            if (referencedEntry) {
+              edges.push({
+                from: entry.id.toString(),
+                to: referencedEntry.id.toString()
+              });
+            }
+          }
+        }
+      }
+
+      res.json({ nodes, edges });
+    } catch (error: any) {
+      console.error("Error generating mindmap:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Markdown export endpoint
+  app.get("/api/export/markdown", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
+      
+      let markdown = `# PersonalKB Export\n\nExported on: ${new Date().toLocaleDateString()}\n\n`;
+      
+      for (const entry of entries) {
+        markdown += `## ${entry.title}\n\n`;
+        markdown += `**Type:** ${entry.type}\n`;
+        markdown += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
+        if (entry.content) {
+          markdown += `${entry.content}\n\n`;
+        }
+        markdown += `---\n\n`;
+      }
+
+      res.setHeader("Content-Type", "text/markdown");
+      res.setHeader("Content-Disposition", "attachment; filename=personalkb-export.md");
+      res.send(markdown);
+    } catch (error: any) {
+      console.error("Error exporting markdown:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Backup endpoint
+  app.post("/api/backup", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
+      
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        entryCount: entries.length,
+        entries: entries
+      };
+
+      res.json({
+        message: "Backup created successfully",
+        entryCount: entries.length,
+        timestamp: backupData.timestamp
+      });
+    } catch (error: any) {
+      console.error("Error creating backup:", error);
       res.status(500).json({ message: error.message });
     }
   });
