@@ -20,7 +20,10 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
 
   const createNoteMutation = useMutation({
     mutationFn: async (data: { title: string; content: string }) => {
-      const response = await apiRequest("POST", "/api/notes", data);
+      const response = await apiRequest("POST", "/api/entries", {
+        ...data,
+        type: "note"
+      });
       return response.json();
     },
     onSuccess: () => {

@@ -65,7 +65,7 @@ export function useOfflineSync() {
             await offlineStorage.markAsSynced(entry.tempId!, data.id);
           } else if (entry.action === 'update' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
-              method: 'PATCH',
+              method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 title: entry.title,
