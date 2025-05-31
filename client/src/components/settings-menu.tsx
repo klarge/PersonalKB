@@ -50,9 +50,16 @@ export default function SettingsMenu() {
     backupMutation.mutate();
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem('auth_token');
-    window.location.href = '/auth';
+  const handleSignOut = async () => {
+    try {
+      await apiRequest('POST', '/auth/logout', {});
+      // Redirect to home, which will show the landing page for unauthenticated users
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, redirect to clear the frontend state
+      window.location.href = '/';
+    }
   };
 
   const getThemeIcon = () => {
