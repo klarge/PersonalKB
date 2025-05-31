@@ -16,9 +16,17 @@ export async function apiRequest(
   const fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
   console.log(`API Request: ${method} ${fullUrl}`);
   
+  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
+  
+  // Add JWT token if available
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -53,7 +61,16 @@ export const getQueryFn: <T>(options: {
     }
     
     console.log(`Query request: ${fullUrl}`);
+    
+    const headers: Record<string, string> = {};
+    // Add JWT token if available
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(fullUrl, {
+      headers,
       credentials: "include",
     });
 

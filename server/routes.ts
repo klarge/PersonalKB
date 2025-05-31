@@ -26,7 +26,11 @@ const upload = multer({
 
 // Helper function to get user ID from different auth formats
 function getUserId(req: any): string {
-  // Check manual session first
+  // Check token-based auth first
+  if (req.userId) {
+    return req.userId;
+  }
+  // Check manual session
   if (req.session?.userId) {
     return req.session.userId;
   }
@@ -72,21 +76,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(401).json({ message: "Unauthorized" });
     };
   } else {
-    // No external authentication configured - use local username/password auth
-    console.log("No external authentication configured. Using local username/password authentication.");
-    const { setupLocalAuth } = await import("./localAuth");
-    setupLocalAuth(app);
-    isAuthenticated = (req: any, res: any, next: any) => {
-      console.log('Auth check - Session ID:', req.sessionID);
-      console.log('Auth check - Session User ID:', req.session?.userId);
-      console.log('Auth check - Passport User:', req.user?.id);
-      
-      // Check both manual session and passport session
-      if ((req.session?.userId) || (req.isAuthenticated && req.isAuthenticated())) {
-        return next();
-      }
-      res.status(401).json({ message: "Unauthorized" });
-    };
+    // No external authentication configured - use token-based auth
+    console.log("No external authentication configured. Using token-based authentication.");
+    const { setupTokenAuth, requireAuth } = await import("./tokenAuth");
+    setupTokenAuth(app);
+    isAuthenticated = requireAuth;
   }
 
   // Always setup local auth routes as fallback, even if external auth is primary

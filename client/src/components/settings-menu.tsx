@@ -51,7 +51,8 @@ export default function SettingsMenu() {
   };
 
   const handleSignOut = () => {
-    window.location.href = '/api/logout';
+    localStorage.removeItem('auth_token');
+    window.location.href = '/auth';
   };
 
   const getThemeIcon = () => {
