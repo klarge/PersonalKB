@@ -200,15 +200,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Person entry creation endpoint
+  app.post("/api/people", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { title, content } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+      
+      const entryData = {
+        userId,
+        title: title.trim(),
+        content: content || "",
+        type: "person" as const,
+        date: new Date(),
+        structuredData: {}
+      };
+
+      const entry = await storage.createEntry(entryData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error("Error creating person entry:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Place entry creation endpoint
+  app.post("/api/places", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { title, content } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+      
+      const entryData = {
+        userId,
+        title: title.trim(),
+        content: content || "",
+        type: "place" as const,
+        date: new Date(),
+        structuredData: {}
+      };
+
+      const entry = await storage.createEntry(entryData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error("Error creating place entry:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Thing entry creation endpoint
+  app.post("/api/things", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { title, content } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: "Title is required" });
+      }
+      
+      const entryData = {
+        userId,
+        title: title.trim(),
+        content: content || "",
+        type: "thing" as const,
+        date: new Date(),
+        structuredData: {}
+      };
+
+      const entry = await storage.createEntry(entryData);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      console.error("Error creating thing entry:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/entries", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
-      const entryData = insertEntrySchema.parse({
+      
+      // Ensure date is provided, default to current date if not
+      const entryData = {
         ...req.body,
         userId,
-      });
+        date: req.body.date ? new Date(req.body.date) : new Date()
+      };
 
-      const entry = await storage.createEntry(entryData);
+      const validatedData = insertEntrySchema.parse(entryData);
+      const entry = await storage.createEntry(validatedData);
       res.status(201).json(entry);
     } catch (error: any) {
       console.error("Error creating entry:", error);
