@@ -17,12 +17,6 @@ export async function apiRequest(
   console.log(`API Request: ${method} ${fullUrl}`);
   
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
-  
-  // Add JWT token if available
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
 
   const res = await fetch(fullUrl, {
     method,
