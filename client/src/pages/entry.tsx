@@ -90,7 +90,7 @@ export default function EntryPage() {
     mutationFn: async (data: { title: string; content: string; structuredData?: any }) => {
       if (!entry?.id) throw new Error("Entry not found");
       
-      const response = await apiRequest("PATCH", `/api/entries/${entry.id}`, data);
+      const response = await apiRequest("PUT", `/api/entries/${entry.id}`, data);
       return response.json();
     },
     onSuccess: () => {
