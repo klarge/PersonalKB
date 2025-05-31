@@ -14,8 +14,8 @@ export function setupLocalAuth(app: Express) {
     return;
   }
   
-  // Only setup session if it hasn't been set up already (by other auth methods)
-  if (!app.get('session-configured')) {
+  // Setup session for local auth (override any existing session config)
+  if (!app.get('local-session-configured')) {
     // Setup session store using PostgreSQL
     const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
     const pgStore = connectPg(session);
@@ -31,6 +31,7 @@ export function setupLocalAuth(app: Express) {
       store: sessionStore,
       resave: false,
       saveUninitialized: false,
+      name: 'connect.sid',
       cookie: {
         httpOnly: true,
         secure: false, // Allow cookies over HTTP for local development
@@ -43,7 +44,7 @@ export function setupLocalAuth(app: Express) {
     app.use(session(sessionSettings));
     app.use(passport.initialize());
     app.use(passport.session());
-    app.set('session-configured', true);
+    app.set('local-session-configured', true);
   }
 
   // Local strategy for username/password authentication
@@ -109,7 +110,13 @@ export function setupLocalAuth(app: Express) {
         }
         console.log('Login successful, session ID:', req.sessionID);
         console.log('User in session:', req.user?.id);
-        res.json(user);
+        // Force session save to ensure cookie is set
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+          }
+          res.json(user);
+        });
       });
     })(req, res, next);
   });
