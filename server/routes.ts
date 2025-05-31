@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupSimpleAuth(app);
 
   // Entry routes (all require authentication)
-  app.get("/api/entries", requireAuth, async (req, res) => {
+  app.get("/api/entries", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { type, limit = 20, offset = 0 } = req.query;
@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/entries/search", requireAuth, async (req, res) => {
+  app.get("/api/entries/search", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { q, type } = req.query;
@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/entries/autocomplete", requireAuth, async (req, res) => {
+  app.get("/api/entries/autocomplete", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entries = await storage.getAllEntriesForAutocomplete(userId);
@@ -93,7 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/entries/:id", requireAuth, async (req, res) => {
+  app.get("/api/entries/:id", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entry = await storage.getEntryById(parseInt(req.params.id));
@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/entries", requireAuth, async (req, res) => {
+  app.post("/api/entries", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entryData = insertEntrySchema.parse({
@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/entries/:id", requireAuth, async (req, res) => {
+  app.put("/api/entries/:id", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entryId = parseInt(req.params.id);
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/entries/:id", requireAuth, async (req, res) => {
+  app.delete("/api/entries/:id", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entryId = parseInt(req.params.id);
@@ -169,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Image upload endpoint
-  app.post("/api/upload", requireAuth, upload.single("image"), async (req, res) => {
+  app.post("/api/upload", requireSimpleAuth, upload.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No image file provided" });
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API token management
-  app.get("/api/tokens", requireAuth, async (req, res) => {
+  app.get("/api/tokens", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const tokens = await storage.getApiTokensByUser(userId);
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tokens", requireAuth, async (req, res) => {
+  app.post("/api/tokens", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { name } = req.body;
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tokens/:id", requireAuth, async (req, res) => {
+  app.delete("/api/tokens/:id", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const tokenId = parseInt(req.params.id);
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Data export
-  app.get("/api/export", requireAuth, async (req, res) => {
+  app.get("/api/export", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
       const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
