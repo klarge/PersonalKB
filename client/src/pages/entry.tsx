@@ -67,8 +67,9 @@ export default function EntryPage() {
         setTitle(today);
       }
     } else if (entry) {
-      // Existing entry - start in view mode
-      setIsEditing(false);
+      // Existing entry with content - start in view mode
+      // New entry without content - start in edit mode
+      setIsEditing(!entry.content || entry.content.trim() === "");
     } else if (entryId && !isLoading && error) {
       // New entry (ID exists but entry not found) - start in edit mode
       setIsEditing(true);
@@ -116,8 +117,8 @@ export default function EntryPage() {
     mutationFn: async () => {
       if (!entry?.id) throw new Error("Entry not found");
       
-      const response = await apiRequest("DELETE", `/api/entries/${entry.id}`, {});
-      return response.json();
+      await apiRequest("DELETE", `/api/entries/${entry.id}`);
+      return true;
     },
     onSuccess: () => {
       toast({
