@@ -6,12 +6,25 @@ import * as schema from "@shared/schema";
 
 const app = express();
 
-// Enable CORS for Android app
+// Security headers and CORS configuration
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  // CORS - restrict origins in production
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes('*') || (origin && allowedOrigins.includes(origin))) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
   res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Security headers
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('X-XSS-Protection', '1; mode=block');
+  res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);

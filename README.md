@@ -29,8 +29,10 @@ A self-hosted personal knowledge management system that combines journaling, not
 - **Frontend**: React, TypeScript, Tailwind CSS
 - **Backend**: Express.js, Node.js
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: OpenID Connect with Replit Auth
+- **Authentication**: Multiple options - Replit Auth, Google OAuth, or local username/password
 - **File Storage**: Local file system for images
+- **Mobile**: Capacitor for native Android app with offline sync capabilities
+- **Security**: Enhanced security headers, CORS protection, bcrypt password hashing
 
 ## Getting Started
 
@@ -310,10 +312,11 @@ The application supports multiple authentication methods. Choose the one that be
    - `REPLIT_DOMAINS`: Comma-separated list of allowed domains
    - `ISSUER_URL`: OAuth issuer URL (default: https://replit.com/oidc)
 
-3. **Single-user mode (no authentication):**
-   - Leave all authentication variables blank
-   - Suitable for personal use or trusted environments
-   - All features available without login
+3. **Local username/password authentication:**
+   - Leave external auth variables blank to enable local authentication
+   - Users can register and login with username/password
+   - Suitable for self-hosted environments
+   - Passwords are securely hashed with bcrypt
 
 **Optional:**
 - `PORT`: Server port (default: 5000)
