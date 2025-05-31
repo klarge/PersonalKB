@@ -28,7 +28,7 @@ const upload = multer({
 function getUserId(req: any): string {
   if (req.user.claims?.sub) {
     // Replit Auth format
-    return getUserId(req);
+    return req.user.claims.sub;
   } else {
     // Local Auth format - user object is stored directly
     return req.user.id;

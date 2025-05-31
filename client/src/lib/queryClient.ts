@@ -35,11 +35,29 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
-    const fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
+    const params = queryKey[1] as Record<string, any> | undefined;
+    
+    let fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
+    
+    // Add query parameters if they exist
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      if (searchParams.toString()) {
+        fullUrl += '?' + searchParams.toString();
+      }
+    }
+    
+    console.log(`Query request: ${fullUrl}`);
     const res = await fetch(fullUrl, {
       credentials: "include",
     });
 
+    console.log(`Query response: ${res.status} ${res.statusText}`);
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
