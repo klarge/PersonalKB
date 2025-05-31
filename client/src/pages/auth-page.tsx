@@ -11,11 +11,8 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Check available auth methods
-  const { data: authConfig } = useQuery({
-    queryKey: ["/auth/config"],
-    retry: false,
-  });
+  // For now, only support local authentication
+  const authConfig = { hasGoogle: false, hasGitHub: false };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +24,7 @@ export default function AuthPage() {
     const password = formData.get("password") as string;
 
     try {
-      const response = await fetch("/auth/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -59,7 +56,7 @@ export default function AuthPage() {
     const lastName = formData.get("lastName") as string;
 
     try {
-      const response = await fetch("/auth/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, firstName, lastName }),

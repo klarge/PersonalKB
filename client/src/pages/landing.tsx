@@ -42,13 +42,14 @@ export default function Landing() {
       );
     } else {
       return (
-        <Button 
-          size="lg"
-          onClick={() => window.location.href = "/api/login"}
-          className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
-        >
-          Start Your Journey
-        </Button>
+        <Link href="/auth">
+          <Button 
+            size="lg"
+            className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
+          >
+            Start Your Journey
+          </Button>
+        </Link>
       );
     }
   };
@@ -181,13 +182,14 @@ export default function Landing() {
           <p className="text-secondary mb-8">
             Transform your note-taking and knowledge management with powerful backlinking and visual connections.
           </p>
-          <Button 
-            size="lg"
-            onClick={() => window.location.href = "/api/login"}
-            className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
-          >
-            Get Started Now
-          </Button>
+          <Link href="/auth">
+            <Button 
+              size="lg"
+              className="bg-primary hover:bg-blue-700 text-white px-8 py-3"
+            >
+              Get Started Now
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
