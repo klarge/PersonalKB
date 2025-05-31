@@ -58,37 +58,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Define authentication middleware variable
   let isAuthenticated: any;
 
-  // Setup authentication based on available environment variables
+  // Always setup token-based authentication for cross-platform compatibility
+  console.log("Setting up token-based authentication for cross-platform support.");
+  const { setupTokenAuth, requireAuth } = await import("./tokenAuth");
+  setupTokenAuth(app);
+  isAuthenticated = requireAuth;
+
+  // Setup additional authentication methods as alternatives
   if (process.env.REPL_ID && process.env.REPLIT_DOMAINS) {
-    // Use Replit Auth if configured
-    const { setupAuth, isAuthenticated: replitAuth } = await import("./replitAuth");
+    console.log("Setting up Replit Auth as additional option.");
+    const { setupAuth } = await import("./replitAuth");
     await setupAuth(app);
-    isAuthenticated = replitAuth;
-  } else if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    // Use Google Auth if configured
+  }
+  
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    console.log("Setting up Google Auth as additional option.");
     const { setupGoogleAuth } = await import("./googleAuth");
     setupGoogleAuth(app);
-    // Google auth provides its own middleware, we'll need to define it
-    isAuthenticated = (req: any, res: any, next: any) => {
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        return next();
-      }
-      res.status(401).json({ message: "Unauthorized" });
-    };
-  } else {
-    // No external authentication configured - use token-based auth
-    console.log("No external authentication configured. Using token-based authentication.");
-    const { setupTokenAuth, requireAuth } = await import("./tokenAuth");
-    setupTokenAuth(app);
-    isAuthenticated = requireAuth;
   }
-
-  // Always setup local auth routes as fallback, even if external auth is primary
-  if (process.env.REPL_ID || process.env.GOOGLE_CLIENT_ID) {
-    console.log("Setting up local authentication as fallback option.");
-    const { setupLocalAuth } = await import("./localAuth");
-    setupLocalAuth(app);
-  }
+  
+  // Setup local auth as additional option
+  console.log("Setting up local authentication as additional option.");
+  const { setupLocalAuth } = await import("./localAuth");
+  setupLocalAuth(app);
 
   // Ensure we have a consistent authentication middleware
   if (!isAuthenticated) {
