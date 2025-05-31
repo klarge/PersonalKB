@@ -24,7 +24,7 @@ export default function AuthPage() {
     const password = formData.get("password") as string;
 
     try {
-      const response = await fetch("/api/login", {
+      const response = await fetch("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -56,7 +56,7 @@ export default function AuthPage() {
     const lastName = formData.get("lastName") as string;
 
     try {
-      const response = await fetch("/api/register", {
+      const response = await fetch("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, firstName, lastName }),
