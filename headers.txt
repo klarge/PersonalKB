@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie
+Access-Control-Allow-Credentials: true
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 292
+ETag: W/"124-lk7diInwOGM6Auj1EBaXf/7UEUI"
+Date: Sat, 31 May 2025 05:18:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

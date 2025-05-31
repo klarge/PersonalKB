@@ -51,18 +51,25 @@ export function setupLocalAuth(app: Express) {
     { usernameField: 'email' },
     async (email, password, done) => {
       try {
+        console.log('Looking up user with email:', email);
         const user = await storage.getUserByEmail(email);
+        console.log('User lookup result:', user ? 'Found' : 'Not found');
         if (!user) {
           return done(null, false, { message: 'User not found' });
         }
 
+        console.log('User found:', user.email);
+        console.log('Password hash exists:', !!user.passwordHash);
+        console.log('Password hash length:', user.passwordHash?.length || 0);
         const isValid = await bcrypt.compare(password, user.passwordHash || '');
+        console.log('Password validation result:', isValid);
         if (!isValid) {
           return done(null, false, { message: 'Invalid password' });
         }
 
         return done(null, user);
       } catch (error) {
+        console.error('Authentication strategy error:', error);
         return done(error);
       }
     }
