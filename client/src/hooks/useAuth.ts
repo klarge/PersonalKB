@@ -2,25 +2,27 @@ import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 
 export function useAuth() {
-  const token = localStorage.getItem('auth_token');
-  
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ["/auth/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
     refetchOnWindowFocus: false,
-    enabled: !!token, // Only run query if token exists
   });
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
-    window.location.href = '/auth';
+  const logout = async () => {
+    try {
+      await fetch("/auth/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/auth";
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return {
     user,
     isLoading,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated: !!user,
     logout,
+    error,
   };
 }

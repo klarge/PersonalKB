@@ -8,14 +8,7 @@ import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User } from "@shared/schema";
 import { pool } from "./db";
-
-declare global {
-  namespace Express {
-    interface User extends User {}
-  }
-}
 
 const scryptAsync = promisify(scrypt);
 
@@ -155,7 +148,7 @@ export function setupAuth(app: Express) {
     );
   }
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user: any, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
@@ -235,13 +228,15 @@ export function setupAuth(app: Express) {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    const user = req.user as any;
     res.json({ 
-      id: req.user.id, 
-      email: req.user.email, 
-      firstName: req.user.firstName, 
-      lastName: req.user.lastName,
-      profileImageUrl: req.user.profileImageUrl,
-      hasPassword: !!req.user.passwordHash
+      id: user.id, 
+      email: user.email, 
+      firstName: user.firstName, 
+      lastName: user.lastName,
+      profileImageUrl: user.profileImageUrl,
+      hasPassword: !!user.passwordHash
     });
   });
 
@@ -253,18 +248,19 @@ export function setupAuth(app: Express) {
 
     try {
       const { currentPassword, newPassword } = req.body;
+      const user = req.user as any;
 
-      if (!req.user.passwordHash) {
+      if (!user.passwordHash) {
         return res.status(400).json({ message: "Social login users cannot change password" });
       }
 
-      const isValid = await comparePasswords(currentPassword, req.user.passwordHash);
+      const isValid = await comparePasswords(currentPassword, user.passwordHash);
       if (!isValid) {
         return res.status(401).json({ message: "Current password is incorrect" });
       }
 
       const newPasswordHash = await hashPassword(newPassword);
-      await storage.updateUser(req.user.id, { passwordHash: newPasswordHash });
+      await storage.updateUser(user.id, { passwordHash: newPasswordHash });
 
       res.json({ message: "Password changed successfully" });
     } catch (error) {

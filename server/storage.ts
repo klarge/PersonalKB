@@ -287,11 +287,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTagsByEntry(entryId: number): Promise<Tag[]> {
-    return await db
-      .select(tags)
+    const result = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        createdAt: tags.createdAt
+      })
       .from(tags)
       .innerJoin(entryTags, eq(tags.id, entryTags.tagId))
       .where(eq(entryTags.entryId, entryId));
+    
+    return result;
   }
 
   async addTagToEntry(entryId: number, tagId: number): Promise<void> {
@@ -317,7 +323,7 @@ export class DatabaseStorage implements IStorage {
 
     if (!matches) return;
 
-    const uniqueTags = [...new Set(matches.map(tag => tag.slice(1)))]; // Remove # and deduplicate
+    const uniqueTags = Array.from(new Set(matches.map(tag => tag.slice(1))));
 
     for (const tagName of uniqueTags) {
       const tag = await this.getOrCreateTag(tagName);
