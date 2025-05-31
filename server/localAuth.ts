@@ -33,8 +33,9 @@ export function setupLocalAuth(app: Express) {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // Allow cookies over HTTP for local development
         maxAge: sessionTtl,
+        sameSite: 'lax',
       },
     };
 
