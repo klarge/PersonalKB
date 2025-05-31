@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import { BookOpen } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
 
 export default function AuthTokenPage() {
   const [, setLocation] = useLocation();
@@ -35,6 +36,8 @@ export default function AuthTokenPage() {
 
       const data = await response.json();
       localStorage.setItem("auth_token", data.token);
+      // Invalidate and refetch user data with new token
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     } catch (error: any) {
       setError(error.message);
@@ -68,6 +71,8 @@ export default function AuthTokenPage() {
 
       const data = await response.json();
       localStorage.setItem("auth_token", data.token);
+      // Invalidate and refetch user data with new token
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     } catch (error: any) {
       setError(error.message);
