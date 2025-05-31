@@ -71,6 +71,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { setupLocalAuth } = await import("./localAuth");
     setupLocalAuth(app);
     isAuthenticated = (req: any, res: any, next: any) => {
+      console.log('Auth check - Session ID:', req.sessionID);
+      console.log('Auth check - User:', req.user?.id);
+      console.log('Auth check - isAuthenticated():', req.isAuthenticated ? req.isAuthenticated() : 'function not available');
       if (req.isAuthenticated && req.isAuthenticated()) {
         return next();
       }
