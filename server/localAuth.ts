@@ -113,6 +113,13 @@ export function setupLocalAuth(app: Express) {
         if (saveErr) {
           console.error('Session save error:', saveErr);
         }
+        // Manually set cookie to ensure it's transmitted
+        res.cookie('connect.sid', req.sessionID, {
+          httpOnly: false,
+          secure: false,
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          sameSite: 'lax'
+        });
         res.json(user);
       });
     })(req, res, next);
@@ -165,6 +172,13 @@ export function setupLocalAuth(app: Express) {
       (req as any).session.userId = user.id;
       (req as any).session.user = user;
       console.log('Registration completed successfully, user logged in');
+      // Manually set cookie to ensure it's transmitted
+      res.cookie('connect.sid', req.sessionID, {
+        httpOnly: false,
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
+      });
       res.status(201).json(user);
     } catch (error) {
       console.error('Registration error details:', error);
