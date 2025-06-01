@@ -62,7 +62,7 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button>Quick Note</Button>}
+        {trigger || <Button>Note</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

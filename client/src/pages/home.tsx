@@ -72,7 +72,7 @@ export default function Home() {
                 trigger={
                   <Button variant="outline" className="px-3 md:px-4">
                     <StickyNote className="h-4 w-4" />
-                    <span className="ml-2 hidden md:inline">Quick Note</span>
+                    <span className="ml-2 hidden md:inline">Note</span>
                   </Button>
                 }
               />
