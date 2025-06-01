@@ -46,6 +46,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupSimpleAuth(app);
 
+  // Get current user endpoint for frontend
+  app.get("/api/auth/user", requireSimpleAuth, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
   // Entry routes (all require authentication)
   
   // Get today's journal entry (or create if it doesn't exist)

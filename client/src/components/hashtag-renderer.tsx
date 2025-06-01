@@ -17,11 +17,28 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
   });
 
   const renderContentWithLinks = (text: string) => {
-    // Split by hashtags while preserving them
-    const parts = text.split(/(#\w+)/g);
+    // Split by both #hashtag and #[[Entry Name]] patterns
+    const parts = text.split(/(#\[\[([^\]]+)\]\]|#\w+)/g);
     
     return parts.map((part, index) => {
-      if (part.startsWith('#')) {
+      if (part.startsWith('#[[') && part.endsWith(']]')) {
+        // Handle #[[Entry Name]] format
+        const entryTitle = part.slice(3, -2); // Remove #[[ and ]]
+        const matchingEntry = autocompleteEntries.find(
+          entry => entry.title.toLowerCase() === entryTitle.toLowerCase()
+        );
+        
+        if (matchingEntry) {
+          return (
+            <Link key={index} href={`/entry/${matchingEntry.id}`}>
+              <span className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium">
+                {part}
+              </span>
+            </Link>
+          );
+        }
+      } else if (part.startsWith('#') && !part.includes('[')) {
+        // Handle simple #hashtag format
         const hashtagText = part.slice(1); // Remove the #
         const matchingEntry = autocompleteEntries.find(
           entry => entry.title.replace(/\s+/g, '').toLowerCase() === hashtagText.toLowerCase()
