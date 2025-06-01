@@ -21,6 +21,9 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
     const parts = text.split(/(#\[\[([^\]]+)\]\]|#\w+)/g);
     
     return parts.map((part, index) => {
+      // Skip if part is undefined or empty
+      if (!part) return null;
+      
       if (part.startsWith('#[[') && part.endsWith(']]')) {
         // Handle #[[Entry Name]] format
         const entryTitle = part.slice(3, -2); // Remove #[[ and ]]
