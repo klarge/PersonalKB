@@ -301,9 +301,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getUserId(req);
       
       // Ensure date is provided, default to current date if not
+      // Ensure content is not null/undefined
       const entryData = {
         ...req.body,
         userId,
+        content: req.body.content || "",
         date: req.body.date ? new Date(req.body.date) : new Date()
       };
 
