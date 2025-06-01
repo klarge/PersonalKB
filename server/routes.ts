@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ZIP export endpoint
   app.get("/api/export/zip", requireSimpleAuth, async (req, res) => {
     try {
-      const JSZip = require('jszip');
+      const JSZip = (await import('jszip')).default;
       const userId = getUserId(req);
       const entries = await storage.getEntriesByUser(userId, undefined, 1000, 0);
       
@@ -483,15 +483,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add individual entry files
       const entriesFolder = zip.folder("entries");
-      for (const entry of entries) {
-        const filename = `${entry.id}-${entry.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
-        let content = `# ${entry.title}\n\n`;
-        content += `**Type:** ${entry.type}\n`;
-        content += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
-        if (entry.content) {
-          content += `${entry.content}\n`;
+      if (entriesFolder) {
+        for (const entry of entries) {
+          const filename = `${entry.id}-${entry.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+          let content = `# ${entry.title}\n\n`;
+          content += `**Type:** ${entry.type}\n`;
+          content += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
+          if (entry.content) {
+            content += `${entry.content}\n`;
+          }
+          entriesFolder.file(filename, content);
         }
-        entriesFolder.file(filename, content);
       }
 
       const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });

@@ -251,6 +251,74 @@ export default function ApiTokensPage() {
             ))
           )}
         </div>
+
+        {/* API Documentation Section */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">API Documentation</CardTitle>
+              <CardDescription>
+                Use these API endpoints to programmatically access your PersonalKB data
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="font-medium mb-2">Authentication</h3>
+                <p className="text-sm text-gray-600 mb-2">Include your API token in the Authorization header:</p>
+                <div className="bg-gray-50 p-3 rounded-lg font-mono text-sm">
+                  Authorization: Bearer YOUR_API_TOKEN
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-2">Example API Calls</h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Get all entries</h4>
+                    <div className="bg-gray-50 p-3 rounded-lg font-mono text-sm">
+                      curl -H "Authorization: Bearer YOUR_TOKEN" \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; {window.location.origin}/api/entries
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Create a new entry</h4>
+                    <div className="bg-gray-50 p-3 rounded-lg font-mono text-sm">
+                      curl -X POST \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; -H "Authorization: Bearer YOUR_TOKEN" \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; -H "Content-Type: application/json" \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; -d '{`{"title":"My Note","type":"note","content":"Hello world"}`}' \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; {window.location.origin}/api/entries
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Search entries</h4>
+                    <div className="bg-gray-50 p-3 rounded-lg font-mono text-sm">
+                      curl -H "Authorization: Bearer YOUR_TOKEN" \<br/>
+                      &nbsp;&nbsp;&nbsp;&nbsp; "{window.location.origin}/api/entries/search?q=keyword"
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-2">Full Documentation</h3>
+                <p className="text-sm text-gray-600">
+                  For complete API documentation including all endpoints, parameters, and response formats, visit:{" "}
+                  <a 
+                    href="https://github.com/klarge/PersonalKB/blob/main/README.md" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    PersonalKB API Documentation
+                  </a>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

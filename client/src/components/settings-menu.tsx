@@ -30,7 +30,10 @@ export default function SettingsMenu() {
   };
 
   const backupMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/backup', {}),
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/backup', {});
+      return response.json();
+    },
     onSuccess: (data: any) => {
       toast({
         title: "Backup Created",

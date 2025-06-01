@@ -7,6 +7,7 @@ import {
   index,
   integer,
   serial,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -33,6 +34,7 @@ export const users = pgTable("users", {
   googleId: varchar("google_id"), // For Google OAuth
   githubId: varchar("github_id"), // For GitHub OAuth
   profileImageUrl: varchar("profile_image_url"),
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
