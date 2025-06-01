@@ -142,6 +142,49 @@ export function setupSimpleAuth(app: Express) {
     }
   });
 
+  // Change password endpoint
+  app.put("/auth/password", async (req, res) => {
+    try {
+      const userId = (req.session as any)?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters long" });
+      }
+
+      // Get current user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify current password
+      if (!user.passwordHash || !await comparePasswords(currentPassword, user.passwordHash)) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const newPasswordHash = await hashPassword(newPassword);
+
+      // Update password
+      await storage.resetUserPassword(userId, newPasswordHash);
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Logout endpoint
   app.post("/auth/logout", (req, res) => {
     req.session.destroy((err) => {

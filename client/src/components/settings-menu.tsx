@@ -7,13 +7,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut, Shield } from "lucide-react";
+import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut, Shield, Lock } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import ChangePasswordDialog from "@/components/change-password-dialog";
 
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
@@ -129,6 +130,15 @@ export default function SettingsMenu() {
             API Tokens
           </DropdownMenuItem>
         </Link>
+        
+        <ChangePasswordDialog
+          trigger={
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <Lock className="h-4 w-4 mr-2" />
+              Change Password
+            </DropdownMenuItem>
+          }
+        />
         
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="flex items-center">
