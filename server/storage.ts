@@ -277,10 +277,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBacklinksForEntry(userId: string, entryTitle: string): Promise<Entry[]> {
-    // Search for both [[Title]] format and #hashtag format
+    // Search for both [[Title]] format and #hashtag format (with exact title)
     const bracketPattern = `%[[${entryTitle}]]%`;
-    // Convert title to a hashtag format (lowercase, no spaces)
-    const hashtagPattern = `%#${entryTitle.toLowerCase().replace(/\s+/g, '')}%`;
+    const hashtagPattern = `%#${entryTitle}%`;
     
     return await db
       .select()

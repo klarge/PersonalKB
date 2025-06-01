@@ -18,7 +18,8 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
 
   const renderContentWithLinks = (text: string) => {
     // Split by both #hashtag and #[[Entry Name]] patterns
-    const parts = text.split(/(#\[\[([^\]]+)\]\]|#\w+)/g);
+    // Updated regex to match hashtags with any characters until whitespace/newline
+    const parts = text.split(/(#\[\[([^\]]+)\]\]|#[^\s\n]+)/g);
     
     return parts.map((part, index) => {
       // Skip if part is undefined or empty
@@ -41,10 +42,10 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
           );
         }
       } else if (part.startsWith('#') && !part.includes('[')) {
-        // Handle simple #hashtag format
+        // Handle simple #hashtag format - match exact title after #
         const hashtagText = part.slice(1); // Remove the #
         const matchingEntry = autocompleteEntries.find(
-          entry => entry.title.replace(/\s+/g, '').toLowerCase() === hashtagText.toLowerCase()
+          entry => entry.title === hashtagText
         );
         
         if (matchingEntry) {
