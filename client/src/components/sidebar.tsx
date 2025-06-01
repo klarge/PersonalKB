@@ -4,6 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function Sidebar() {
   const { user } = useAuth();
+  
+  // Debug: Log user data to console
+  console.log("User data in sidebar:", user);
 
   const handleCreateTodayEntry = () => {
     window.location.href = "/entry/today";

@@ -9,6 +9,7 @@ import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package } f
 import QuickNoteDialog from "@/components/quick-note-dialog";
 import SettingsMenu from "@/components/settings-menu";
 import HashtagRenderer from "@/components/hashtag-renderer";
+import HashtagPreview from "@/components/hashtag-preview";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -341,7 +342,7 @@ function EntryCard({ entry }: { entry: Entry }) {
         </h3>
         
         <div className="text-gray-600 text-sm mb-3 line-clamp-3">
-          <HashtagRenderer content={preview} />
+          <HashtagPreview content={preview} />
         </div>
       </div>
     </Link>
