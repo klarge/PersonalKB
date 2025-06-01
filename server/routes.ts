@@ -499,18 +499,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       zip.file("personalkb-export.md", markdown);
       
-      // Add individual entry files
+      // Add individual entry files organized by type
       const entriesFolder = zip.folder("entries");
       if (entriesFolder) {
-        for (const entry of entries) {
-          const filename = `${entry.id}-${entry.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
-          let content = `# ${entry.title}\n\n`;
-          content += `**Type:** ${entry.type}\n`;
-          content += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
-          if (entry.content) {
-            content += `${entry.content}\n`;
+        // Group entries by type
+        const entriesByType = entries.reduce((acc, entry) => {
+          if (!acc[entry.type]) {
+            acc[entry.type] = [];
           }
-          entriesFolder.file(filename, content);
+          acc[entry.type].push(entry);
+          return acc;
+        }, {} as Record<string, typeof entries>);
+
+        // Create a folder for each entry type
+        for (const [type, typeEntries] of Object.entries(entriesByType)) {
+          const typeFolder = entriesFolder.folder(type);
+          if (typeFolder) {
+            for (const entry of typeEntries) {
+              const filename = `${entry.id}-${entry.title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+              let content = `# ${entry.title}\n\n`;
+              content += `**Type:** ${entry.type}\n`;
+              content += `**Date:** ${new Date(entry.date).toLocaleDateString()}\n\n`;
+              if (entry.content) {
+                content += `${entry.content}\n`;
+              }
+              typeFolder.file(filename, content);
+            }
+          }
         }
       }
 
