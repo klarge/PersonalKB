@@ -56,12 +56,17 @@ export function setupSimpleAuth(app: Express) {
         return res.status(400).json({ message: "User already exists" });
       }
 
+      // Check if this is the first user - if so, make them admin
+      const existingUsers = await storage.getAllUsers();
+      const isFirstUser = existingUsers.length === 0;
+
       const passwordHash = await hashPassword(password);
       const user = await storage.createUser({
         email,
         firstName,
         lastName,
         passwordHash,
+        isAdmin: isFirstUser,
       });
 
       // Set user session

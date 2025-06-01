@@ -14,6 +14,7 @@ import Mindmap from "@/pages/mindmap";
 import Stats from "@/pages/stats";
 import MindmapView from "@/pages/mindmap-view";
 import ApiTokens from "@/pages/api-tokens";
+import Admin from "@/pages/admin";
 import ServerConfig from "@/pages/server-config";
 import NotFound from "@/pages/not-found";
 import { ServerConfig as ServerConfigUtil } from "@/lib/server-config";
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/stats" component={Stats} />
           <Route path="/mindmap-view" component={MindmapView} />
           <Route path="/api-tokens" component={ApiTokens} />
+          <Route path="/admin" component={Admin} />
         </>
       )}
       <Route component={NotFound} />
