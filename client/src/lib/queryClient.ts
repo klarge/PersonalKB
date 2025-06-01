@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { ServerConfig } from "./server-config";
+import { mobileAuth, isMobile } from "./mobile-auth";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -13,6 +14,12 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // For mobile, use mobile auth API request
+  if (isMobile()) {
+    return await mobileAuth.apiRequest(method, url, data);
+  }
+  
+  // For web, use session-based auth
   const fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
   console.log(`API Request: ${method} ${fullUrl}`);
   
@@ -39,6 +46,37 @@ export const getQueryFn: <T>(options: {
     const url = queryKey[0] as string;
     const params = queryKey[1] as Record<string, any> | undefined;
     
+    // For mobile, use mobile auth API request
+    if (isMobile()) {
+      try {
+        let requestUrl = url;
+        if (params) {
+          const searchParams = new URLSearchParams();
+          Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              searchParams.append(key, String(value));
+            }
+          });
+          if (searchParams.toString()) {
+            requestUrl += '?' + searchParams.toString();
+          }
+        }
+        
+        const res = await mobileAuth.apiRequest('GET', requestUrl);
+        if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+          return null;
+        }
+        await throwIfResNotOk(res);
+        return await res.json();
+      } catch (error: any) {
+        if (unauthorizedBehavior === "returnNull" && error.message.includes('401')) {
+          return null;
+        }
+        throw error;
+      }
+    }
+    
+    // For web, use session-based auth
     let fullUrl = url.startsWith('/') ? ServerConfig.buildApiUrl(url) : url;
     
     // Add query parameters if they exist
@@ -56,15 +94,7 @@ export const getQueryFn: <T>(options: {
     
     console.log(`Query request: ${fullUrl}`);
     
-    const headers: Record<string, string> = {};
-    // Add JWT token if available
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     const res = await fetch(fullUrl, {
-      headers,
       credentials: "include",
     });
 

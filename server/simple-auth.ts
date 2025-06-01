@@ -221,7 +221,31 @@ export function setupSimpleAuth(app: Express) {
   });
 }
 
-export function requireSimpleAuth(req: any, res: any, next: any) {
+export async function requireSimpleAuth(req: any, res: any, next: any) {
+  // Check for API token in Authorization header first
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    
+    try {
+      // Validate API token
+      const apiToken = await storage.getApiTokenByToken(token);
+      if (!apiToken) {
+        return res.status(401).json({ message: "Invalid API token" });
+      }
+      
+      // Update last used timestamp
+      await storage.updateApiTokenLastUsed(apiToken.id);
+      
+      req.userId = apiToken.userId;
+      return next();
+    } catch (error) {
+      console.error("API token validation error:", error);
+      return res.status(401).json({ message: "Authentication required" });
+    }
+  }
+  
+  // Fall back to session-based auth
   const userId = (req.session as any)?.userId;
   
   if (!userId) {

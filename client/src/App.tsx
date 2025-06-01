@@ -16,16 +16,17 @@ import MindmapView from "@/pages/mindmap-view";
 import ApiTokens from "@/pages/api-tokens";
 import Admin from "@/pages/admin";
 import ServerConfig from "@/pages/server-config";
+import MobileSetup from "@/pages/mobile-setup";
 import NotFound from "@/pages/not-found";
 import { ServerConfig as ServerConfigUtil } from "@/lib/server-config";
 import { Capacitor } from "@capacitor/core";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isMobileConfigured, isMobile } = useAuth();
 
-  // Check if running on Android and server URL is not configured
-  if (Capacitor.isNativePlatform() && !ServerConfigUtil.isConfigured()) {
-    return <ServerConfig />;
+  // Check if running on mobile and not configured
+  if (isMobile && !isMobileConfigured) {
+    return <MobileSetup onSetupComplete={() => window.location.reload()} />;
   }
 
   if (isLoading) {
