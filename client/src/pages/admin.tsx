@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Key, UserPlus, Shield, ShieldCheck } from "lucide-react";
+import { Trash2, Key, UserPlus, Shield, ShieldCheck, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -186,12 +186,18 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <ShieldCheck className="h-8 w-8" />
-            Administration
-          </h1>
-          <p className="text-muted-foreground mt-2">Manage user accounts and permissions</p>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={() => window.location.href = '/'}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <ShieldCheck className="h-8 w-8" />
+              Administration
+            </h1>
+            <p className="text-muted-foreground mt-2">Manage user accounts and permissions</p>
+          </div>
         </div>
         
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
