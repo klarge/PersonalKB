@@ -281,7 +281,10 @@ export class DatabaseStorage implements IStorage {
     const bracketPattern = `%[[${entryTitle}]]%`;
     const hashtagPattern = `%#${entryTitle}%`;
     
-    return await db
+    console.log('Searching backlinks for:', entryTitle);
+    console.log('Patterns:', { bracketPattern, hashtagPattern });
+    
+    const results = await db
       .select()
       .from(entries)
       .where(
@@ -294,6 +297,9 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(entries.createdAt));
+      
+    console.log('Backlinks found:', results.length);
+    return results;
   }
 
   // Tag operations
