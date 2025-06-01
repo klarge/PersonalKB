@@ -597,6 +597,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin middleware to check if user is admin
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      next();
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      res.status(500).json({ error: "Failed to verify admin status" });
+    }
+  };
+
+  // Admin routes
+  app.get("/api/admin/users", requireSimpleAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users", requireSimpleAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { email, firstName, lastName, password, isAdmin } = req.body;
+      
+      if (!email || !firstName || !lastName || !password) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "User with this email already exists" });
+      }
+
+      // Hash password
+      const bcrypt = require("bcryptjs");
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      const newUser = await storage.createUser({
+        email,
+        firstName,
+        lastName,
+        passwordHash,
+        isAdmin: isAdmin || false,
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireSimpleAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { id } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (id === userId) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+
+      await storage.deleteUser(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/password", requireSimpleAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+      
+      if (!password) {
+        return res.status(400).json({ error: "Password is required" });
+      }
+
+      // Hash new password
+      const bcrypt = require("bcryptjs");
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      const user = await storage.resetUserPassword(id, passwordHash);
+      res.json(user);
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", requireSimpleAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Remove sensitive fields that shouldn't be updated this way
+      delete updates.passwordHash;
+      delete updates.googleId;
+      delete updates.githubId;
+
+      const user = await storage.updateUser(id, updates);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

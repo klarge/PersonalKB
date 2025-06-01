@@ -32,8 +32,12 @@ export interface IStorage {
     googleId?: string;
     githubId?: string;
     profileImageUrl?: string;
+    isAdmin?: boolean;
   }): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  deleteUser(id: string): Promise<void>;
+  resetUserPassword(id: string, newPasswordHash: string): Promise<User>;
   
   // API Token operations
   createApiToken(token: InsertApiToken): Promise<ApiToken>;
@@ -85,6 +89,7 @@ export class DatabaseStorage implements IStorage {
     googleId?: string;
     githubId?: string;
     profileImageUrl?: string;
+    isAdmin?: boolean;
   }): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -97,6 +102,23 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async resetUserPassword(id: string, newPasswordHash: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ passwordHash: newPasswordHash, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
