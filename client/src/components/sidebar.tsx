@@ -92,15 +92,14 @@ export default function Sidebar() {
 
       {/* Settings */}
       <div className="p-4 border-t border-gray-100 space-y-1">
-        {user?.isAdmin && (
-          <a
-            href="/admin"
-            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
-          >
-            <Shield className="h-4 w-4" />
-            <span>Administration</span>
-          </a>
-        )}
+        {/* Debug: Always show admin menu for testing */}
+        <a
+          href="/admin"
+          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
+        >
+          <Shield className="h-4 w-4" />
+          <span>Administration {user?.isAdmin ? '(Admin)' : '(Debug)'}</span>
+        </a>
         <a
           href="#"
           className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
