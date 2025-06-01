@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut } from "lucide-react";
+import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut, Shield } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const handleExport = () => {
     const link = document.createElement('a');
@@ -87,6 +87,15 @@ export default function SettingsMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Application Settings</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        
+        {user?.isAdmin && (
+          <Link href="/admin">
+            <DropdownMenuItem>
+              <Shield className="h-4 w-4 mr-2" />
+              Administration
+            </DropdownMenuItem>
+          </Link>
+        )}
         
         <Link href="/stats">
           <DropdownMenuItem>
