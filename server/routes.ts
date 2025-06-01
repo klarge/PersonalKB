@@ -6,6 +6,7 @@ import { insertEntrySchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import bcrypt from "bcryptjs";
 import { setupSimpleAuth, requireSimpleAuth } from "./simple-auth";
 
 // Setup multer for image uploads
@@ -655,7 +656,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Hash password
-      const bcrypt = require("bcryptjs");
       const passwordHash = await bcrypt.hash(password, 12);
 
       const newUser = await storage.createUser({
