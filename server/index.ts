@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "./db";
 import * as schema from "@shared/schema";
+import { runMigrations } from "./migrations";
 
 const app = express();
 
@@ -103,7 +104,9 @@ async function createTablesIfNotExist() {
           "last_name" varchar,
           "profile_image_url" varchar,
           "google_id" varchar UNIQUE,
+          "github_id" varchar UNIQUE,
           "password_hash" varchar,
+          "is_admin" boolean DEFAULT false,
           "created_at" timestamp DEFAULT now(),
           "updated_at" timestamp DEFAULT now()
         );
@@ -201,6 +204,9 @@ async function createTablesIfNotExist() {
 (async () => {
   // Create database tables on first run
   await createTablesIfNotExist();
+  
+  // Run database migrations to handle schema changes
+  await runMigrations();
   
   const server = await registerRoutes(app);
 
