@@ -1,4 +1,7 @@
-// Offline storage using IndexedDB for mobile app
+// Offline storage using IndexedDB for web and Capacitor Preferences for mobile
+import { Capacitor } from '@capacitor/core';
+import type { Entry } from '../../../shared/schema';
+
 interface OfflineEntry {
   id?: number;
   tempId?: string;
@@ -10,6 +13,16 @@ interface OfflineEntry {
   synced: boolean;
   action: 'create' | 'update' | 'delete';
   timestamp: number;
+  userId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface MobileStorage {
+  setItem(key: string, value: string): Promise<void>;
+  getItem(key: string): Promise<string | null>;
+  removeItem(key: string): Promise<void>;
+  keys(): Promise<string[]>;
 }
 
 class OfflineStorage {
