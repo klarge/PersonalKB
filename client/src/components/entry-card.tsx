@@ -40,6 +40,11 @@ function getConnectionCount(content: string) {
   return hashtags.length;
 }
 
+function cleanContentForPreview(content: string) {
+  // Remove image markdown patterns from content preview
+  return content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '').trim();
+}
+
 export default function EntryCard({ entry, searchQuery }: EntryCardProps) {
   const hashtags = extractHashtags(entry.content);
   const readTime = getReadTime(entry.content);
@@ -81,7 +86,7 @@ export default function EntryCard({ entry, searchQuery }: EntryCardProps) {
         
         <p className="text-secondary text-sm line-clamp-2 mb-3">
           {highlightText(
-            entry.content.substring(0, 200) + (entry.content.length > 200 ? "..." : ""),
+            cleanContentForPreview(entry.content).substring(0, 200) + (cleanContentForPreview(entry.content).length > 200 ? "..." : ""),
             searchQuery
           )}
         </p>
