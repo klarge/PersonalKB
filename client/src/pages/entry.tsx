@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye } from "lucide-react";
+import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
@@ -111,6 +111,45 @@ export default function EntryPage() {
     },
   });
 
+  // Mutation for uploading images
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!entry?.id) throw new Error("Entry not found");
+      
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("entryId", entry.id.toString());
+      
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+      
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      // For profile photos, save the URL to structured data
+      if (entry.type === "person") {
+        updateStructuredField("profilePhoto", data.url);
+      }
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been uploaded successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation for deleting entry
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -164,76 +203,131 @@ export default function EntryPage() {
     switch (entry.type) {
       case "person":
         return (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={structuredData.name || ""}
-                onChange={(e) => updateStructuredField("name", e.target.value)}
-                placeholder="Enter full name"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
+              <Label htmlFor="profilePhoto">Profile Photo</Label>
+              {isEditing ? (
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && entryId) {
+                        uploadImageMutation.mutate(file);
+                      }
+                    }}
+                    className="hidden"
+                    id="profilePhotoUpload"
+                  />
+                  <label
+                    htmlFor="profilePhotoUpload"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Upload Photo
+                  </label>
+                  {structuredData.profilePhoto && (
+                    <div className="mt-2">
+                      <img
+                        src={structuredData.profilePhoto}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateStructuredField("profilePhoto", "")}
+                        className="mt-2"
+                      >
+                        Remove Photo
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                structuredData.profilePhoto && (
+                  <div className="mt-2">
+                    <img
+                      src={structuredData.profilePhoto}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover"
+                    />
+                  </div>
+                )
+              )}
             </div>
-            <div>
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                type="date"
-                value={structuredData.dateOfBirth || ""}
-                onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={structuredData.phone || ""}
-                onChange={(e) => updateStructuredField("phone", e.target.value)}
-                placeholder="Phone number"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={structuredData.email || ""}
-                onChange={(e) => updateStructuredField("email", e.target.value)}
-                placeholder="Email address"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div className="col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={structuredData.address || ""}
-                onChange={(e) => updateStructuredField("address", e.target.value)}
-                placeholder="Home address"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="occupation">Occupation</Label>
-              <Input
-                id="occupation"
-                value={structuredData.occupation || ""}
-                onChange={(e) => updateStructuredField("occupation", e.target.value)}
-                placeholder="Job title/profession"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="company">Company</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={structuredData.name || ""}
+                  onChange={(e) => updateStructuredField("name", e.target.value)}
+                  placeholder="Enter full name"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={structuredData.dateOfBirth || ""}
+                  onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={structuredData.phone || ""}
+                  onChange={(e) => updateStructuredField("phone", e.target.value)}
+                  placeholder="Phone number"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={structuredData.email || ""}
+                  onChange={(e) => updateStructuredField("email", e.target.value)}
+                  placeholder="Email address"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  value={structuredData.address || ""}
+                  onChange={(e) => updateStructuredField("address", e.target.value)}
+                  placeholder="Home address"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input
+                  id="occupation"
+                  value={structuredData.occupation || ""}
+                  onChange={(e) => updateStructuredField("occupation", e.target.value)}
+                  placeholder="Job title/profession"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="company">Company</Label>
               <Input
                 id="company"
                 value={structuredData.company || ""}
