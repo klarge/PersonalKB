@@ -35,25 +35,58 @@ interface MobileStorage {
   keys(): Promise<string[]>;
 }
 
-const isMobile = () => Capacitor.isNativePlatform();
+const isMobile = () => {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+};
 
 const getMobileStorage = async (): Promise<MobileStorage> => {
   if (isMobile()) {
+    console.log('✓ Using Capacitor Preferences for Android storage');
     const { Preferences } = await import('@capacitor/preferences');
     return {
       setItem: async (key: string, value: string) => {
-        await Preferences.set({ key, value });
+        try {
+          await Preferences.set({ key, value });
+          console.log(`✓ Saved to Capacitor: ${key}`);
+        } catch (error) {
+          console.error(`✗ Failed to save to Capacitor: ${key}`, error);
+          throw error;
+        }
       },
       getItem: async (key: string) => {
-        const result = await Preferences.get({ key });
-        return result.value;
+        try {
+          const result = await Preferences.get({ key });
+          console.log(`✓ Retrieved from Capacitor: ${key}`, result.value ? 'found' : 'not found');
+          return result.value;
+        } catch (error) {
+          console.error(`✗ Failed to get from Capacitor: ${key}`, error);
+          return null;
+        }
       },
       removeItem: async (key: string) => {
-        await Preferences.remove({ key });
+        try {
+          await Preferences.remove({ key });
+          console.log(`✓ Removed from Capacitor: ${key}`);
+        } catch (error) {
+          console.error(`✗ Failed to remove from Capacitor: ${key}`, error);
+        }
       },
       keys: async () => {
-        const result = await Preferences.keys();
-        return result.keys;
+        try {
+          const result = await Preferences.keys();
+          const filteredKeys = result.keys.filter(key => 
+            key.startsWith('offline_entry_') || key.startsWith('cached_entry_')
+          );
+          console.log(`✓ Found ${filteredKeys.length} offline storage keys in Capacitor`);
+          return filteredKeys;
+        } catch (error) {
+          console.error('✗ Failed to get Capacitor keys', error);
+          return [];
+        }
       },
     };
   } else {
@@ -204,11 +237,15 @@ class OfflineStorageMobile {
 
   // Get all offline entries (both unsynced and cached)
   async getAllOfflineEntries(): Promise<OfflineEntry[]> {
+    console.log('📱 Getting all offline entries...');
     const storage = await this.getStorage();
     const keys = await storage.keys();
+    console.log('📱 Found storage keys:', keys.length);
+    
     const entryKeys = keys.filter(key => 
       key.startsWith(this.ENTRY_PREFIX) || key.startsWith(this.CACHED_ENTRY_PREFIX)
     );
+    console.log('📱 Entry keys found:', entryKeys.length, entryKeys);
 
     const entries: OfflineEntry[] = [];
     const processedIds = new Set<number>();
@@ -218,6 +255,7 @@ class OfflineStorageMobile {
       if (entryData) {
         try {
           const entry = JSON.parse(entryData);
+          console.log('📱 Processing entry:', key, entry.title || entry.tempId);
           
           // For cached entries, check if there's a newer offline update
           if (key.startsWith(this.CACHED_ENTRY_PREFIX) && entry.id) {
@@ -234,12 +272,14 @@ class OfflineStorageMobile {
                 if (updateData) {
                   const updateEntry = JSON.parse(updateData);
                   // Merge the update with the cached entry
-                  entries.push({
+                  const mergedEntry = {
                     ...entry,
                     ...updateEntry,
                     timestamp: updateEntry.timestamp
-                  });
+                  };
+                  entries.push(mergedEntry);
                   processedIds.add(entry.id);
+                  console.log('📱 Added updated cached entry:', mergedEntry.title);
                   continue;
                 }
               }
@@ -249,20 +289,23 @@ class OfflineStorageMobile {
             if (!processedIds.has(entry.id)) {
               entries.push(entry);
               processedIds.add(entry.id);
+              console.log('📱 Added cached entry:', entry.title);
             }
           } else if (key.startsWith(this.ENTRY_PREFIX)) {
             // For offline entries, only add if it's not an update to an already processed entry
             if (!entry.id || !processedIds.has(entry.id)) {
               entries.push(entry);
               if (entry.id) processedIds.add(entry.id);
+              console.log('📱 Added offline entry:', entry.title);
             }
           }
         } catch (error) {
-          console.error('Failed to parse offline entry:', error);
+          console.error('📱 Failed to parse offline entry:', key, error);
         }
       }
     }
 
+    console.log('📱 Total entries retrieved:', entries.length);
     return entries.sort((a, b) => b.timestamp - a.timestamp);
   }
 

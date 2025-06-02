@@ -40,11 +40,24 @@ export default function AutoResizeTextarea({
     autoResize();
   };
 
+  // Handle Android keyboard overlay
+  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    // Scroll element into view on Android to avoid keyboard overlay
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    
+    if (props.onFocus) {
+      props.onFocus(e);
+    }
+  };
+
   return (
     <textarea
       ref={textareaRef}
       value={value}
       onChange={handleChange}
+      onFocus={handleFocus}
       className={cn(
         "resize-none overflow-hidden",
         className
