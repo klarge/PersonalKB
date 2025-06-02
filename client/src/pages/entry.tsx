@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package,
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import MarkdownEditor from "@/components/markdown-editor";
+import WysiwygEditor from "@/components/wysiwyg-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
 import type { Entry } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -654,7 +654,7 @@ export default function EntryPage() {
               </h3>
               
               {isEditing ? (
-                <MarkdownEditor
+                <WysiwygEditor
                   content={content}
                   onChange={setContent}
                   placeholder={getContentPlaceholder(entry?.type)}
