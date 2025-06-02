@@ -134,18 +134,16 @@ class OfflineStorageMobile {
     return tempId;
   }
 
-  // Cache server entries for offline access
+  // Cache server entries for offline access - now handles ALL user entries
   async cacheServerEntries(entries: EntryData[]): Promise<void> {
     const storage = await this.getStorage();
     
-    // Clear existing cached entries
-    const keys = await storage.keys();
-    const cachedKeys = keys.filter(key => key.startsWith(this.CACHED_ENTRY_PREFIX));
-    for (const key of cachedKeys) {
-      await storage.removeItem(key);
-    }
-
-    // Save new cached entries
+    console.log(`Caching ${entries.length} entries for offline access`);
+    
+    // Don't clear existing cached entries, just update/add new ones
+    // This allows us to build up a comprehensive offline cache
+    
+    // Save all entries to cache
     for (const entry of entries) {
       const cacheKey = `${this.CACHED_ENTRY_PREFIX}${entry.id}`;
       await storage.setItem(cacheKey, JSON.stringify({
@@ -155,6 +153,52 @@ class OfflineStorageMobile {
         timestamp: Date.now(),
         action: 'create' as const
       }));
+    }
+    
+    console.log(`Successfully cached ${entries.length} entries`);
+  }
+
+  // Cache all user entries proactively (fetch all from server)
+  async cacheAllUserEntries(): Promise<void> {
+    try {
+      console.log('Proactively fetching and caching all user entries...');
+      
+      // Fetch all entry types from server
+      const entryTypes = ['journal', 'note', 'person', 'place', 'thing'];
+      const allEntries: EntryData[] = [];
+      
+      for (const type of entryTypes) {
+        const response = await fetch(`/api/entries?type=${type}&limit=1000`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const entries = await response.json();
+          allEntries.push(...entries);
+        }
+      }
+      
+      // Also fetch entries without type filter to catch any others
+      const generalResponse = await fetch('/api/entries?limit=1000', {
+        credentials: 'include'
+      });
+      
+      if (generalResponse.ok) {
+        const generalEntries = await generalResponse.json();
+        // Merge and deduplicate
+        const existingIds = new Set(allEntries.map(e => e.id));
+        for (const entry of generalEntries) {
+          if (!existingIds.has(entry.id)) {
+            allEntries.push(entry);
+          }
+        }
+      }
+      
+      console.log(`Found ${allEntries.length} total entries to cache`);
+      await this.cacheServerEntries(allEntries);
+      
+    } catch (error) {
+      console.error('Failed to proactively cache all entries:', error);
     }
   }
 

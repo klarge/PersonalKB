@@ -72,19 +72,96 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
     }
   }, [androidOfflineEnabled]);
 
-  // Cache online entries for offline use (Android only)
-  useEffect(() => {
-    if (androidOfflineEnabled && isOnline && onlineQuery.data && onlineQuery.data.length > 0) {
-      console.log('Android: Caching', onlineQuery.data.length, 'entries for offline use');
-      cacheEntriesOffline(onlineQuery.data);
-    }
-  }, [isOnline, onlineQuery.data, androidOfflineEnabled]);
-
   const cacheEntriesOffline = async (entries: EntryData[]) => {
     try {
       await offlineStorageMobile.cacheServerEntries(entries);
     } catch (error) {
       console.error('Error caching entries offline:', error);
+    }
+  };
+
+  const proactivelyCacheAllEntries = async () => {
+    try {
+      await offlineStorageMobile.cacheAllUserEntries();
+    } catch (error) {
+      console.error('Error proactively caching all entries:', error);
+    }
+  };
+
+  // Cache online entries and sync offline changes (Android only)
+  useEffect(() => {
+    if (androidOfflineEnabled && isOnline) {
+      console.log('Android online: Starting proactive caching and sync');
+      proactivelyCacheAllEntries();
+      syncOfflineChanges();
+    }
+  }, [isOnline, androidOfflineEnabled]);
+
+  const syncOfflineChanges = async () => {
+    try {
+      console.log('Android: Syncing offline changes to server...');
+      const unsyncedEntries = await offlineStorageMobile.getUnsyncedEntries();
+      console.log(`Found ${unsyncedEntries.length} unsynced entries`);
+      
+      for (const entry of unsyncedEntries) {
+        try {
+          if (entry.action === 'create') {
+            // Create new entry on server
+            const response = await fetch('/api/entries', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                title: entry.title,
+                content: entry.content,
+                type: entry.type,
+                date: entry.date,
+                structuredData: entry.structuredData || {}
+              })
+            });
+            
+            if (response.ok) {
+              const serverEntry = await response.json();
+              await offlineStorageMobile.markAsSynced(entry.tempId, serverEntry.id);
+              console.log('Synced new entry:', entry.title);
+            }
+          } else if (entry.action === 'update' && entry.id) {
+            // Update existing entry on server
+            const response = await fetch(`/api/entries/${entry.id}`, {
+              method: 'PUT',
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                title: entry.title,
+                content: entry.content,
+                structuredData: entry.structuredData || {}
+              })
+            });
+            
+            if (response.ok) {
+              await offlineStorageMobile.markAsSynced(entry.tempId);
+              console.log('Synced entry update:', entry.title);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to sync entry:', entry.title, error);
+        }
+      }
+      
+      // Refresh data after sync
+      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+      if (androidOfflineEnabled) {
+        loadOfflineEntries();
+      }
+      
+    } catch (error) {
+      console.error('Error syncing offline changes:', error);
     }
   };
 
