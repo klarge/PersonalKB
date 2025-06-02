@@ -17,13 +17,28 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
   });
 
   const renderContentWithLinks = (text: string) => {
-    // Split by both #hashtag and #[[Entry Name]] patterns
-    // Updated regex to match hashtags with any characters until whitespace/newline
-    const parts = text.split(/(#\[\[([^\]]+)\]\]|#[^\s\n]+)/g);
+    // Split by hashtags, images, and preserve other content
+    // Updated regex to match hashtags, [[links]], and markdown images
+    const parts = text.split(/(#\[\[([^\]]+)\]\]|#[^\s\n]+|!\[([^\]]*)\]\(([^)]+)\))/g);
     
     return parts.map((part, index) => {
       // Skip if part is undefined or empty
       if (!part) return null;
+      
+      // Handle markdown images ![alt](src)
+      const imageMatch = part.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+      if (imageMatch) {
+        const [, altText, imageSrc] = imageMatch;
+        return (
+          <img 
+            key={index}
+            src={imageSrc}
+            alt={altText}
+            className="max-w-full h-auto rounded-lg shadow-sm my-2"
+            style={{ maxHeight: '400px' }}
+          />
+        );
+      }
       
       if (part.startsWith('#[[') && part.endsWith(']]')) {
         // Handle #[[Entry Name]] format
