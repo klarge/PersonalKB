@@ -26,7 +26,20 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
         formData.append("entryId", entryId.toString());
       }
 
-      const response = await apiRequest("POST", "/api/upload", formData);
+      console.log("Uploading file:", file.name, file.size, "bytes");
+      
+      // Use fetch directly instead of apiRequest for FormData uploads
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
       return response.json();
     },
     onSuccess: (data) => {

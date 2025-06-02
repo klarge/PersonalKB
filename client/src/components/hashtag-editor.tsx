@@ -36,13 +36,26 @@ export default function HashtagEditor({ content, onChange, placeholder }: Hashta
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("image", file);
-      // Add entryId if available (this will need to be passed from parent component)
+      // Add entryId if available
       const entryId = (window as any).currentEntryId;
       if (entryId) {
         formData.append("entryId", entryId.toString());
       }
 
-      const response = await apiRequest("POST", "/api/upload", formData);
+      console.log("Uploading file:", file.name, file.size, "bytes");
+      
+      // Use fetch directly instead of apiRequest for FormData uploads
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
       return response.json();
     },
     onSuccess: (data) => {
