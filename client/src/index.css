@@ -112,6 +112,11 @@
   .border-gray-200 {
     @apply dark:border-slate-700;
   }
+  
+  /* Fix dropdown menu hover states */
+  [data-radix-collection-item]:hover {
+    @apply bg-blue-50 text-primary;
+  }
 }
 
 @layer utilities {

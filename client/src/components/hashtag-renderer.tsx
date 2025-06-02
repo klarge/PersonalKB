@@ -25,7 +25,7 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
       // Skip if part is undefined or empty
       if (!part) return null;
       
-      // Handle markdown images ![alt](src)
+      // Handle markdown images ![alt](src) - render image and return early
       const imageMatch = part.match(/!\[([^\]]*)\]\(([^)]+)\)/);
       if (imageMatch) {
         const [, altText, imageSrc] = imageMatch;
@@ -38,6 +38,11 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
             style={{ maxHeight: '400px' }}
           />
         );
+      }
+      
+      // Skip rendering the markdown text if it's an image pattern
+      if (part.startsWith('![') && part.includes('](') && part.endsWith(')')) {
+        return null;
       }
       
       if (part.startsWith('#[[') && part.endsWith(']]')) {
