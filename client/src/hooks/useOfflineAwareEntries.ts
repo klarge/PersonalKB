@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react';
 import { offlineStorageMobile, type OfflineEntry, type EntryData } from '@/lib/offline-storage-mobile';
 import { useOfflineSync } from './useOfflineSync';
 
+// Check if running on Android
+const isAndroid = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
+};
+
 interface UseOfflineAwareEntriesOptions {
   type?: 'journal' | 'note' | 'person' | 'place' | 'thing';
   searchQuery?: string;
@@ -16,6 +22,10 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
   const [offlineEntries, setOfflineEntries] = useState<EntryData[]>([]);
   const [isLoadingOffline, setIsLoadingOffline] = useState(false);
   const queryClient = useQueryClient();
+  
+  // Only enable offline functionality on Android
+  const androidOfflineEnabled = isAndroid();
+  console.log('Android offline enabled:', androidOfflineEnabled);
 
   // Build query key based on options
   const queryKey = searchQuery 
@@ -44,28 +54,31 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
     updatedAt: offlineEntry.updatedAt || new Date(offlineEntry.timestamp).toISOString()
   });
 
-  // Load offline entries when offline or as fallback
+  // Load offline entries when offline or as fallback (Android only)
   useEffect(() => {
-    if (!isOnline) {
-      console.log('Going offline, loading cached entries...');
+    if (androidOfflineEnabled && !isOnline) {
+      console.log('Android going offline, loading cached entries...');
       loadOfflineEntries();
-    } else {
-      console.log('Going online, will use server data');
+    } else if (androidOfflineEnabled) {
+      console.log('Android online, will use server data');
     }
-  }, [isOnline, type, searchQuery, limit, offset]);
+  }, [isOnline, type, searchQuery, limit, offset, androidOfflineEnabled]);
 
-  // Also load offline entries on component mount regardless of online status
+  // Preload offline entries on component mount (Android only)
   useEffect(() => {
-    console.log('Component mounted, preloading offline entries for fallback');
-    loadOfflineEntries();
-  }, []);
+    if (androidOfflineEnabled) {
+      console.log('Android app mounted, preloading offline entries for fallback');
+      loadOfflineEntries();
+    }
+  }, [androidOfflineEnabled]);
 
-  // Cache online entries for offline use
+  // Cache online entries for offline use (Android only)
   useEffect(() => {
-    if (isOnline && onlineQuery.data && onlineQuery.data.length > 0) {
+    if (androidOfflineEnabled && isOnline && onlineQuery.data && onlineQuery.data.length > 0) {
+      console.log('Android: Caching', onlineQuery.data.length, 'entries for offline use');
       cacheEntriesOffline(onlineQuery.data);
     }
-  }, [isOnline, onlineQuery.data]);
+  }, [isOnline, onlineQuery.data, androidOfflineEnabled]);
 
   const cacheEntriesOffline = async (entries: EntryData[]) => {
     try {
@@ -84,8 +97,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       date: string;
       structuredData?: any;
     }) => {
-      if (isOnline) {
-        // If online, create normally via API
+      if (isOnline || !androidOfflineEnabled) {
+        // If online OR on web (no offline support), create normally via API
         const response = await fetch('/api/entries', {
           method: 'POST',
           headers: { 
@@ -102,7 +115,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         }
         return await response.json();
       } else {
-        // If offline, save to offline storage
+        // If offline on Android, save to offline storage
+        console.log('Android offline: Saving entry to offline storage');
         const tempId = await offlineStorageMobile.saveOfflineEntry({
           title: entryData.title,
           content: entryData.content,
@@ -139,8 +153,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       content: string;
       structuredData?: any;
     }) => {
-      if (isOnline) {
-        // If online, update normally via API
+      if (isOnline || !androidOfflineEnabled) {
+        // If online OR on web (no offline support), update normally via API
         const response = await fetch(`/api/entries/${updateData.id}`, {
           method: 'PUT',
           headers: { 
@@ -158,7 +172,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         if (!response.ok) throw new Error('Failed to update entry');
         return await response.json();
       } else {
-        // If offline, save update to offline storage
+        // If offline on Android, save update to offline storage
+        console.log('Android offline: Saving entry update to offline storage');
         const tempId = await offlineStorageMobile.updateExistingEntry(updateData.id, {
           id: updateData.id,
           title: updateData.title,
@@ -217,11 +232,24 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
     }
   };
 
-  // Return appropriate data based on online status
-  if (isOnline) {
-    // When online, prefer server data but fallback to offline if server data is empty
+  // Return appropriate data based on platform and online status
+  if (!androidOfflineEnabled) {
+    // Web browsers: Only use online data, no offline functionality
+    console.log('Web browser: Using standard online-only mode');
+    return {
+      data: onlineQuery.data || [],
+      isLoading: onlineQuery.isLoading,
+      error: onlineQuery.error,
+      isOnline: isOnline,
+      createEntry: createOfflineEntryMutation.mutate,
+      isCreating: createOfflineEntryMutation.isPending,
+      updateEntry: updateOfflineEntryMutation.mutate,
+      isUpdating: updateOfflineEntryMutation.isPending
+    };
+  } else if (isOnline) {
+    // Android online: Prefer server data, fallback to cached if needed
     const dataToShow = (onlineQuery.data && onlineQuery.data.length > 0) ? onlineQuery.data : offlineEntries;
-    console.log('Online mode: showing', dataToShow.length, 'entries');
+    console.log('Android online: showing', dataToShow.length, 'entries');
     
     return {
       data: dataToShow,
@@ -234,8 +262,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       isUpdating: updateOfflineEntryMutation.isPending
     };
   } else {
-    // When offline, always show cached/offline entries
-    console.log('Offline mode: showing', offlineEntries.length, 'cached entries');
+    // Android offline: Show cached/offline entries
+    console.log('Android offline: showing', offlineEntries.length, 'cached entries');
     
     return {
       data: offlineEntries,
