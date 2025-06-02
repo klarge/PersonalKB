@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package,
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
-import HashtagEditor from "@/components/hashtag-editor";
+import MarkdownEditor from "@/components/markdown-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
 import type { Entry } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -646,7 +646,7 @@ export default function EntryPage() {
               </div>
             )}
 
-            {/* Content Editor/Viewer with Hashtag Support */}
+            {/* Content Editor/Viewer with Markdown Support */}
             <div className="mb-6">
               <h3 className="text-lg font-medium mb-4">
                 {entry?.type === "journal" ? "Journal Entry" : 
@@ -654,7 +654,7 @@ export default function EntryPage() {
               </h3>
               
               {isEditing ? (
-                <HashtagEditor
+                <MarkdownEditor
                   content={content}
                   onChange={setContent}
                   placeholder={getContentPlaceholder(entry?.type)}
