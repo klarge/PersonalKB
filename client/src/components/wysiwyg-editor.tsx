@@ -119,15 +119,35 @@ export default function WysiwygEditor({ content, onChange, placeholder }: Wysiwy
     if (editorRef.current) {
       const markdown = htmlToMarkdown(editorRef.current.innerHTML);
       onChange(markdown);
+      
+      // Auto-resize the editor
+      autoResize();
     }
   };
 
-  // Initialize editor content
+  const autoResize = () => {
+    if (editorRef.current) {
+      // Reset height to auto to get the scroll height
+      editorRef.current.style.height = 'auto';
+      // Set height to scroll height with a minimum
+      const newHeight = Math.max(400, editorRef.current.scrollHeight + 20);
+      editorRef.current.style.height = `${newHeight}px`;
+    }
+  };
+
+  // Initialize editor content and setup auto-resize
   useEffect(() => {
     if (editorRef.current && content !== htmlToMarkdown(editorRef.current.innerHTML)) {
       editorRef.current.innerHTML = markdownToHtml(content);
+      // Auto-resize after content is loaded
+      setTimeout(autoResize, 0);
     }
   }, [content]);
+
+  // Setup auto-resize on mount
+  useEffect(() => {
+    autoResize();
+  }, []);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData.items;
@@ -235,8 +255,12 @@ export default function WysiwygEditor({ content, onChange, placeholder }: Wysiwy
           contentEditable
           onInput={updateContent}
           onPaste={handlePaste}
-          className="w-full min-h-[400px] p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 prose prose-sm max-w-none"
-          style={{ wordBreak: 'break-word' }}
+          className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 prose prose-sm max-w-none overflow-hidden resize-none"
+          style={{ 
+            wordBreak: 'break-word',
+            minHeight: '400px',
+            overflowY: 'hidden'
+          }}
           suppressContentEditableWarning={true}
           data-placeholder={placeholder}
         />

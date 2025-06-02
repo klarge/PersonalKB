@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import WysiwygEditor from "@/components/wysiwyg-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
+import AutoResizeTextarea from "@/components/auto-resize-textarea";
 import type { Entry } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -610,12 +611,13 @@ export default function EntryPage() {
           <div className="p-6">
             {/* Title Input */}
             <div className="mb-6">
-              <Input
-                type="text"
+              <AutoResizeTextarea
                 placeholder={getPlaceholderText(entry?.type)}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400"
+                className="w-full text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400 bg-transparent"
+                minHeight={48}
+                maxHeight={120}
               />
             </div>
             
