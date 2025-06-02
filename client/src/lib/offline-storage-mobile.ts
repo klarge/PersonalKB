@@ -137,11 +137,52 @@ class OfflineStorageMobile {
     );
 
     const entries: OfflineEntry[] = [];
+    const processedIds = new Set<number>();
+
     for (const key of entryKeys) {
       const entryData = await storage.getItem(key);
       if (entryData) {
         try {
-          entries.push(JSON.parse(entryData));
+          const entry = JSON.parse(entryData);
+          
+          // For cached entries, check if there's a newer offline update
+          if (key.startsWith(this.CACHED_ENTRY_PREFIX) && entry.id) {
+            const updateKeys = keys.filter(k => 
+              k.startsWith(this.ENTRY_PREFIX) && 
+              k.includes(`update_${entry.id}_`)
+            );
+            
+            // If there are updates for this entry, use the most recent one
+            if (updateKeys.length > 0) {
+              const latestUpdateKey = updateKeys.sort().pop();
+              if (latestUpdateKey) {
+                const updateData = await storage.getItem(latestUpdateKey);
+                if (updateData) {
+                  const updateEntry = JSON.parse(updateData);
+                  // Merge the update with the cached entry
+                  entries.push({
+                    ...entry,
+                    ...updateEntry,
+                    timestamp: updateEntry.timestamp
+                  });
+                  processedIds.add(entry.id);
+                  continue;
+                }
+              }
+            }
+            
+            // Only add cached entry if no updates exist
+            if (!processedIds.has(entry.id)) {
+              entries.push(entry);
+              processedIds.add(entry.id);
+            }
+          } else if (key.startsWith(this.ENTRY_PREFIX)) {
+            // For offline entries, only add if it's not an update to an already processed entry
+            if (!entry.id || !processedIds.has(entry.id)) {
+              entries.push(entry);
+              if (entry.id) processedIds.add(entry.id);
+            }
+          }
         } catch (error) {
           console.error('Failed to parse offline entry:', error);
         }

@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
 
 interface QuickNoteDialogProps {
   trigger?: React.ReactNode;
@@ -16,37 +15,9 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { createEntry, isCreating, isOnline } = useOfflineAwareEntries({ type: 'note' });
 
-  const createNoteMutation = useMutation({
-    mutationFn: async (data: { title: string; content: string }) => {
-      const response = await apiRequest("POST", "/api/entries", {
-        ...data,
-        type: "note"
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Note created",
-        description: "Your quick note has been saved successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/entries", { type: "note" }] });
-      setTitle("");
-      setContent("");
-      setOpen(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create note. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       toast({
@@ -56,7 +27,31 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
       });
       return;
     }
-    createNoteMutation.mutate({ title: title.trim(), content: content.trim() });
+
+    try {
+      await createEntry({
+        title: title.trim(),
+        content: content.trim(),
+        type: 'note',
+        date: new Date().toISOString(),
+        structuredData: {}
+      });
+
+      toast({
+        title: "Note created",
+        description: isOnline ? "Your quick note has been saved successfully." : "Your note has been saved offline and will sync when you're back online.",
+      });
+
+      setTitle("");
+      setContent("");
+      setOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create note. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -96,9 +91,9 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
             </Button>
             <Button
               type="submit"
-              disabled={createNoteMutation.isPending || !title.trim() || !content.trim()}
+              disabled={isCreating || !title.trim() || !content.trim()}
             >
-              {createNoteMutation.isPending ? "Creating..." : "Create Note"}
+              {isCreating ? "Creating..." : "Create Note"}
             </Button>
           </div>
         </form>
