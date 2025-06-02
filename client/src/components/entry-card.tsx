@@ -47,9 +47,10 @@ function getConnectionCount(content: string) {
 
 function cleanContentForPreview(content: string) {
   // Remove image markdown patterns from content preview
-  // Also remove extra whitespace that might be left behind
+  // Handle both standard markdown and the specific format used by the app
   const cleaned = content
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '') // Remove image markdown
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove image markdown patterns
+    .replace(/\n+/g, ' ') // Replace line breaks with spaces
     .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
     .trim();
   return cleaned;
