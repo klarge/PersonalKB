@@ -32,13 +32,7 @@ export default function EntryPage() {
     queryKey: isToday ? ["/api/entries/today"] : ["/api/entries", entryId],
     queryFn: async () => {
       const url = isToday ? "/api/entries/today" : `/api/entries/${entryId}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error("Entry not found");
-        }
-        throw new Error(`Failed to fetch entry: ${res.status}`);
-      }
+      const res = await apiRequest("GET", url);
       return res.json();
     },
     enabled: isToday || (!!entryId && !isNaN(entryId)),
@@ -150,7 +144,7 @@ export default function EntryPage() {
   };
 
   const updateStructuredField = (field: string, value: string) => {
-    setStructuredData(prev => ({ ...prev, [field]: value }));
+    setStructuredData((prev: any) => ({ ...prev, [field]: value }));
   };
 
   const getStructuredFields = () => {

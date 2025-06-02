@@ -66,8 +66,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="knowledge-ui-theme">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <div className="safe-area-top">
+            <Toaster />
+            <Router />
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

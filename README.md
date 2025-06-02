@@ -6,7 +6,7 @@ A self-hosted personal knowledge management system that combines journaling, not
 
 - **Rich Text Journaling**: Write with a powerful editor that supports markdown, image pasting, and formatting. Perfect for daily journaling and long-form thoughts.
 
-- **Smart Backlinking**: Use hashtags to automatically connect related entries. Build a web of knowledge that grows with your thoughts.
+- **Smart Backlinking**: Use hashtags and [[Title]] references to automatically connect related entries. Build a web of knowledge that grows with your thoughts.
 
 - **Full-Text Search**: Find any thought, idea, or reference instantly with powerful search across all your entries and content.
 
@@ -14,7 +14,15 @@ A self-hosted personal knowledge management system that combines journaling, not
 
 - **Multi-User Support**: Secure authentication system supporting multiple users with isolated data access for each account.
 
-- **Export & Backup**: Export all your data as organized markdown files for backup or migration purposes. Includes both client-side export and server-side backup functionality.
+- **Central User Administration**: Admin users can create, manage, and delete user accounts from a central dashboard. The first registered user becomes the administrator automatically.
+
+- **Password Management**: Users can change their own passwords through a secure settings interface with proper validation.
+
+- **Mobile App Support**: Native Android app with API token-based authentication, offline sync capabilities, and responsive design optimized for mobile devices.
+
+- **Enhanced Export & Backup**: Export all your data as organized markdown files sorted by entry type (journal, notes, people, places, things). Includes both client-side export and server-side backup functionality.
+
+- **Database Migrations**: Automatic schema updates for self-hosted instances ensure smooth upgrades without manual database changes.
 
 ## Entry Types
 
@@ -364,23 +372,71 @@ sudo systemctl restart personal-kb
 
 ## Usage
 
-### Creating Entries
+### Web Application
+
+#### Creating Entries
 
 - Use the "Today's Journal" button for daily journaling
-- Create quick notes with the sticky note button
+- Create quick notes with the note button
 - Add structured entries for People, Places, and Things
 
-### Backlinking
+#### Backlinking
 
-- Use hashtags (#example) to link between entries
-- Hashtags automatically become clickable links to referenced entries
+- Use hashtags (#example) and [[Title]] references to link between entries
+- References automatically become clickable links to referenced entries
 - View backlinks at the bottom of each entry to see connections
 
-### Search
+#### Search
 
 - Use the search bar to find content across all entries
 - Search works across titles, content, and hashtags
 - Filter by entry type for focused results
+
+#### User Administration (Admin Users)
+
+- Access the Admin panel from the settings menu
+- Create new user accounts with email and temporary passwords
+- View all users and their account details
+- Delete user accounts (removes all associated data)
+- First registered user automatically becomes admin
+
+#### Password Management
+
+- Change your password from Settings → Change Password
+- Requires current password for security verification
+- Passwords are securely hashed and stored
+
+#### Export and Backup
+
+- Export all your data as organized markdown files
+- Files are sorted into folders by entry type
+- Includes images and maintains proper linking structure
+- Use for backup or migration to other systems
+
+### Mobile Application (Android)
+
+#### Initial Setup
+
+1. Install the PersonalKB Android app
+2. On first launch, you'll be prompted to configure the server connection
+3. Enter your self-hosted instance URL (e.g., `https://your-domain.com`)
+4. Enter your email and password credentials
+5. The app will automatically obtain and store an API token for secure access
+
+#### Features
+
+- Full offline support with automatic sync when connected
+- Native mobile interface optimized for touch devices
+- Secure API token-based authentication
+- All web features available including search, entry creation, and backlinking
+- Safe area handling for modern Android devices
+
+#### Troubleshooting Mobile Setup
+
+- Ensure your server URL is correct and accessible
+- Check that your credentials match your web account
+- Verify your self-hosted instance is running and reachable
+- API tokens are automatically managed - no manual configuration needed
 
 ## API Documentation
 
