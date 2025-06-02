@@ -25,8 +25,13 @@ function highlightText(text: string, query?: string) {
 
 function extractHashtags(content: string) {
   const hashtagRegex = /#(\w+)/g;
-  const hashtags = [...content.matchAll(hashtagRegex)];
-  return hashtags.slice(0, 3).map(([, tag]) => tag);
+  const hashtags: string[] = [];
+  let match;
+  while ((match = hashtagRegex.exec(content)) !== null) {
+    hashtags.push(match[1]);
+    if (hashtags.length >= 3) break;
+  }
+  return hashtags;
 }
 
 function getReadTime(content: string) {
@@ -42,7 +47,10 @@ function getConnectionCount(content: string) {
 
 function cleanContentForPreview(content: string) {
   // Remove image markdown patterns from content preview
-  return content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '').trim();
+  const cleaned = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '').trim();
+  console.log('Original content:', content.substring(0, 100));
+  console.log('Cleaned content:', cleaned.substring(0, 100));
+  return cleaned;
 }
 
 export default function EntryCard({ entry, searchQuery }: EntryCardProps) {
