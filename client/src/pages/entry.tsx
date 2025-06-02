@@ -157,7 +157,7 @@ export default function EntryPage() {
 
     const getFieldClassName = () => {
       return !isEditing 
-        ? "bg-gray-50 dark:bg-gray-800 cursor-default text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700" 
+        ? "bg-gray-50 dark:bg-gray-800 cursor-default text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 pointer-events-none" 
         : "dark:bg-gray-800 dark:border-gray-600 dark:text-white";
     };
 
