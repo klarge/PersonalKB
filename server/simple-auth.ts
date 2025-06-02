@@ -83,6 +83,7 @@ export function setupSimpleAuth(app: Express) {
   app.post("/auth/login", async (req, res) => {
     try {
       const { email, password, deviceType } = req.body;
+      console.log("Login attempt:", { email, deviceType });
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -90,16 +91,19 @@ export function setupSimpleAuth(app: Express) {
 
       const user = await storage.getUserByEmail(email);
       if (!user || !user.passwordHash) {
+        console.log("Login failed: User not found or no password hash");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const isValid = await comparePasswords(password, user.passwordHash);
       if (!isValid) {
+        console.log("Login failed: Invalid password");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // For mobile devices, create and return an API token
       if (deviceType === 'mobile') {
+        console.log("Creating mobile API token for user:", user.id);
         const crypto = await import('crypto');
         const token = crypto.randomBytes(32).toString('hex');
         const tokenName = `Mobile App - ${new Date().toLocaleDateString()}`;
@@ -110,6 +114,7 @@ export function setupSimpleAuth(app: Express) {
           name: tokenName,
         });
 
+        console.log("Mobile login successful, returning token");
         return res.json({ 
           user: { 
             id: user.id, 
