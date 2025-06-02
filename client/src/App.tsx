@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
+import { useAndroidBack } from "@/hooks/use-android-back";
 import Landing from "@/pages/landing";
 import AuthPage from "@/pages/auth-page";
 import Home from "@/pages/home";
@@ -23,6 +24,9 @@ import { Capacitor } from "@capacitor/core";
 
 function Router() {
   const { isAuthenticated, isLoading, isMobileConfigured, isMobile } = useAuth();
+  
+  // Enable Android back button handling
+  useAndroidBack();
 
   // Check if running on mobile and not configured
   if (isMobile && !isMobileConfigured) {
