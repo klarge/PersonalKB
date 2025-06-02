@@ -14,6 +14,7 @@ interface MarkdownEditorProps {
 export default function MarkdownEditor({ content, onChange, placeholder }: MarkdownEditorProps) {
   const [dragOver, setDragOver] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(true);
   const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,36 +181,37 @@ export default function MarkdownEditor({ content, onChange, placeholder }: Markd
         </div>
       </div>
 
-      {/* Editor/Preview */}
-      <div className="min-h-[200px]">
-        {isPreviewMode ? (
-          <div className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900 min-h-[200px]">
-            <HashtagRenderer content={content} />
-          </div>
-        ) : (
-          <div
-            className={`relative ${dragOver ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-          >
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => onChange(e.target.value)}
-              onPaste={handlePaste}
-              placeholder={placeholder}
-              className="w-full min-h-[200px] p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
-            />
-            {dragOver && (
-              <div className="absolute inset-0 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 border-2 border-dashed border-blue-400 rounded-lg">
-                <p className="text-blue-600 dark:text-blue-400 font-medium">
-                  Drop image here to upload
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+      {/* Split Editor/Preview */}
+      <div className="min-h-[400px] grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Editor Side */}
+        <div
+          className={`relative ${dragOver ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => onChange(e.target.value)}
+            onPaste={handlePaste}
+            placeholder={placeholder}
+            className="w-full h-[400px] p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600"
+          />
+          {dragOver && (
+            <div className="absolute inset-0 flex items-center justify-center bg-blue-100 dark:bg-blue-900/50 border-2 border-dashed border-blue-400 rounded-lg">
+              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                Drop image here to upload
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Live Preview Side */}
+        <div className="border rounded-lg bg-gray-50 dark:bg-gray-900 p-4 overflow-y-auto h-[400px]">
+          <div className="text-xs text-gray-500 mb-2">Live Preview</div>
+          <HashtagRenderer content={content || "*Start typing to see preview...*"} />
+        </div>
       </div>
 
       {/* Hidden file input */}
