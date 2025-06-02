@@ -78,6 +78,8 @@ export default function EntryPage() {
       setTitle(entry.title || "");
       setContent(entry.content || "");
       setStructuredData(entry.structuredData || {});
+      // Set global entry ID for image uploads
+      (window as any).currentEntryId = entry.id;
     }
   }, [entry]);
 
