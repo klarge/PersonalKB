@@ -7,19 +7,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut, Shield, Lock } from "lucide-react";
+import { Menu, Download, Moon, Sun, Monitor, BarChart3, Network, Key, HardDrive, LogOut, Shield, Lock, Wifi, WifiOff } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { Badge } from "@/components/ui/badge";
 import ChangePasswordDialog from "@/components/change-password-dialog";
 
 export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const { isOnline, pendingCount, triggerSync } = useOfflineSync();
 
   const handleExport = () => {
     const link = document.createElement('a');
@@ -87,6 +90,34 @@ export default function SettingsMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Application Settings</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        {/* Online/Offline Status */}
+        <DropdownMenuItem className="focus:bg-transparent cursor-default">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center">
+              {isOnline ? (
+                <Wifi className="h-4 w-4 text-green-500 mr-2" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-orange-500 mr-2" />
+              )}
+              <span>{isOnline ? 'Online' : 'Offline'}</span>
+            </div>
+            {pendingCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {pendingCount} pending
+              </Badge>
+            )}
+          </div>
+        </DropdownMenuItem>
+        
+        {pendingCount > 0 && isOnline && (
+          <DropdownMenuItem onClick={triggerSync}>
+            <Network className="h-4 w-4 mr-2" />
+            Sync Now
+          </DropdownMenuItem>
+        )}
+        
         <DropdownMenuSeparator />
         
         {user?.isAdmin && (

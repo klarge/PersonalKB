@@ -15,11 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { useOfflineCache } from "@/hooks/useOfflineCache";
 import type { EntryData } from "@/lib/offline-storage-mobile";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const { isOnline, pendingCount } = useOfflineSync();
+  
+  // Enable automatic caching of all entries when online
+  useOfflineCache();
 
   // Use offline-aware data fetching
   const allEntriesQuery = useOfflineAwareEntries({});
@@ -59,23 +63,6 @@ export default function Home() {
             <div className="flex items-center space-x-3">
               <BookOpen className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-semibold text-gray-900">PersonalKB</h1>
-              
-              {/* Offline/Online Status Indicator */}
-              <div className="flex items-center space-x-1">
-                {isOnline ? (
-                  <Wifi className="h-4 w-4 text-green-500" />
-                ) : (
-                  <WifiOff className="h-4 w-4 text-orange-500" />
-                )}
-                <span className="text-xs text-gray-500 hidden sm:inline">
-                  {isOnline ? 'Online' : 'Offline'}
-                </span>
-                {pendingCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {pendingCount} pending
-                  </Badge>
-                )}
-              </div>
             </div>
             
             <div className="flex items-center space-x-2">
