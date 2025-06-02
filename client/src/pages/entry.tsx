@@ -13,6 +13,7 @@ import { Link, useLocation } from "wouter";
 import HashtagEditor from "@/components/hashtag-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
 import type { Entry } from "@shared/schema";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function EntryPage() {
   const [match, params] = useRoute("/entry/:id");
@@ -23,6 +24,7 @@ export default function EntryPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
 
   const isToday = params?.id === "today";
   const entryId = isToday ? null : parseInt(params?.id || "0");
@@ -555,9 +557,14 @@ export default function EntryPage() {
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
                 size="sm"
+                title={isEditing ? "View" : "Edit"}
               >
-                {isEditing ? <Eye className="h-4 w-4 mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
-                {isEditing ? "View" : "Edit"}
+                {isEditing ? <Eye className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                {!isMobile && (
+                  <>
+                    <span className="ml-2">{isEditing ? "View" : "Edit"}</span>
+                  </>
+                )}
               </Button>
               
               {!isToday && (
@@ -565,10 +572,14 @@ export default function EntryPage() {
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
                   variant="outline"
+                  size="sm"
                   className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  title={deleteMutation.isPending ? "Deleting..." : "Delete"}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                  <Trash2 className="h-4 w-4" />
+                  {!isMobile && (
+                    <span className="ml-2">{deleteMutation.isPending ? "Deleting..." : "Delete"}</span>
+                  )}
                 </Button>
               )}
               
@@ -576,10 +587,14 @@ export default function EntryPage() {
                 <Button 
                   onClick={handleSave}
                   disabled={updateMutation.isPending || !title.trim()}
+                  size="sm"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
+                  title={updateMutation.isPending ? "Saving..." : "Save"}
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateMutation.isPending ? "Saving..." : "Save"}
+                  <Save className="h-4 w-4" />
+                  {!isMobile && (
+                    <span className="ml-2">{updateMutation.isPending ? "Saving..." : "Save"}</span>
+                  )}
                 </Button>
               )}
             </div>
