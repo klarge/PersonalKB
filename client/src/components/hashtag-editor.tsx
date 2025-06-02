@@ -36,17 +36,13 @@ export default function HashtagEditor({ content, onChange, placeholder }: Hashta
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("image", file);
-
-      const response = await fetch("/api/images", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
+      // Add entryId if available (this will need to be passed from parent component)
+      const entryId = (window as any).currentEntryId;
+      if (entryId) {
+        formData.append("entryId", entryId.toString());
       }
 
+      const response = await apiRequest("POST", "/api/upload", formData);
       return response.json();
     },
     onSuccess: (data) => {

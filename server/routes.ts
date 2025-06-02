@@ -7,6 +7,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
+import express from "express";
 import { setupSimpleAuth, requireSimpleAuth } from "./simple-auth";
 
 // Setup multer for image uploads
@@ -35,6 +36,15 @@ function getUserId(req: any): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure uploads directory exists
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(uploadsDir));
+
   // Health check endpoint for Docker
   app.get("/api/health", (req, res) => {
     res.status(200).json({ 
@@ -365,19 +375,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { entryId } = req.body;
-      if (!entryId) {
-        return res.status(400).json({ message: "Entry ID required" });
-      }
+      console.log("Upload request:", { entryId, filename: req.file.filename });
 
-      // Verify entry belongs to user
+      // For now, allow uploads without entryId (can be associated later)
       const userId = getUserId(req);
-      const entry = await storage.getEntryById(parseInt(entryId));
-      if (!entry || entry.userId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      
+      if (entryId) {
+        // Verify entry belongs to user if entryId is provided
+        const entry = await storage.getEntryById(parseInt(entryId));
+        if (!entry || entry.userId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       const imageData = {
-        entryId: parseInt(entryId),
+        entryId: entryId ? parseInt(entryId) : null,
         filename: req.file.filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
@@ -385,7 +397,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const image = await storage.createImage(imageData);
-      res.status(201).json(image);
+      
+      // Return image data with URL for display
+      const imageWithUrl = {
+        ...image,
+        url: `/uploads/${req.file.filename}`
+      };
+
+      console.log("Upload successful:", imageWithUrl);
+      res.status(201).json(imageWithUrl);
     } catch (error: any) {
       console.error("Error uploading image:", error);
       res.status(500).json({ message: error.message });

@@ -79,7 +79,7 @@ export const entryTags = pgTable("entry_tags", {
 // Images table for image uploads
 export const images = pgTable("images", {
   id: serial("id").primaryKey(),
-  entryId: integer("entry_id").notNull(),
+  entryId: integer("entry_id"),
   filename: varchar("filename").notNull(),
   originalName: varchar("original_name").notNull(),
   mimeType: varchar("mime_type").notNull(),
