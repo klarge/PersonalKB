@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package } from "lucide-react";
+import { Calendar, BookOpen, StickyNote, Plus, Search, User, MapPin, Package, Wifi, WifiOff } from "lucide-react";
 import QuickNoteDialog from "@/components/quick-note-dialog";
 import SettingsMenu from "@/components/settings-menu";
 import HashtagRenderer from "@/components/hashtag-renderer";
@@ -13,39 +13,40 @@ import HashtagPreview from "@/components/hashtag-preview";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Entry } from "@shared/schema";
+import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
+import type { EntryData } from "@/lib/offline-storage-mobile";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { isOnline, pendingCount } = useOfflineSync();
 
-  const { data: allEntries = [], isLoading: isLoadingAll } = useQuery<Entry[]>({
-    queryKey: ["/api/entries"],
+  // Use offline-aware data fetching
+  const allEntriesQuery = useOfflineAwareEntries({});
+  const journalEntriesQuery = useOfflineAwareEntries({ type: "journal" });
+  const noteEntriesQuery = useOfflineAwareEntries({ type: "note" });
+  const peopleEntriesQuery = useOfflineAwareEntries({ type: "person" });
+  const placeEntriesQuery = useOfflineAwareEntries({ type: "place" });
+  const thingEntriesQuery = useOfflineAwareEntries({ type: "thing" });
+  const searchEntriesQuery = useOfflineAwareEntries({ 
+    searchQuery: searchQuery.trim().length > 0 ? searchQuery : undefined 
   });
 
-  const { data: journalEntries = [], isLoading: isLoadingJournal } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "journal" }],
-  });
+  const allEntries = allEntriesQuery.data;
+  const journalEntries = journalEntriesQuery.data;
+  const noteEntries = noteEntriesQuery.data;
+  const peopleEntries = peopleEntriesQuery.data;
+  const placeEntries = placeEntriesQuery.data;
+  const thingEntries = thingEntriesQuery.data;
+  const searchResults = searchEntriesQuery.data;
 
-  const { data: noteEntries = [], isLoading: isLoadingNotes } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "note" }],
-  });
-
-  const { data: peopleEntries = [], isLoading: isLoadingPeople } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "person" }],
-  });
-
-  const { data: placeEntries = [], isLoading: isLoadingPlaces } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "place" }],
-  });
-
-  const { data: thingEntries = [], isLoading: isLoadingThings } = useQuery<Entry[]>({
-    queryKey: ["/api/entries", { type: "thing" }],
-  });
-
-  const { data: searchResults = [], isLoading: isSearching } = useQuery<Entry[]>({
-    queryKey: ["/api/search", searchQuery],
-    enabled: searchQuery.trim().length > 0,
-  });
+  const isLoadingAll = allEntriesQuery.isLoading;
+  const isLoadingJournal = journalEntriesQuery.isLoading;
+  const isLoadingNotes = noteEntriesQuery.isLoading;
+  const isLoadingPeople = peopleEntriesQuery.isLoading;
+  const isLoadingPlaces = placeEntriesQuery.isLoading;
+  const isLoadingThings = thingEntriesQuery.isLoading;
+  const isSearching = searchEntriesQuery.isLoading;
 
   const displayEntries = searchQuery.trim() ? searchResults : allEntries;
 
@@ -58,6 +59,23 @@ export default function Home() {
             <div className="flex items-center space-x-3">
               <BookOpen className="h-8 w-8 text-blue-600" />
               <h1 className="text-xl font-semibold text-gray-900">PersonalKB</h1>
+              
+              {/* Offline/Online Status Indicator */}
+              <div className="flex items-center space-x-1">
+                {isOnline ? (
+                  <Wifi className="h-4 w-4 text-green-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-orange-500" />
+                )}
+                <span className="text-xs text-gray-500 hidden sm:inline">
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+                {pendingCount > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {pendingCount} pending
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -207,14 +225,14 @@ export default function Home() {
 }
 
 interface EntryListProps {
-  entries: Entry[];
+  entries: EntryData[];
   isLoading: boolean;
   emptyMessage: string;
   type?: "journal" | "note" | "person" | "place" | "thing";
 }
 
 function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
-  const [allEntries, setAllEntries] = useState<Entry[]>(entries);
+  const [allEntries, setAllEntries] = useState<EntryData[]>(entries);
   const [offset, setOffset] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(entries.length === 20);
@@ -298,7 +316,7 @@ function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
   );
 }
 
-function EntryCard({ entry }: { entry: Entry }) {
+function EntryCard({ entry }: { entry: EntryData }) {
   const preview = entry.content.slice(0, 200) + (entry.content.length > 200 ? "..." : "");
   
   // Extract hashtags
