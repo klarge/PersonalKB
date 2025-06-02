@@ -214,7 +214,7 @@ class OfflineStorageMobile {
     }
   }
 
-  // Update offline entry
+  // Update offline entry (for unsynced entries)
   async updateOfflineEntry(tempId: string, updates: Partial<OfflineEntry>): Promise<void> {
     const storage = await this.getStorage();
     const entryKey = `${this.ENTRY_PREFIX}${tempId}`;
@@ -229,6 +229,47 @@ class OfflineStorageMobile {
         console.error('Failed to update offline entry:', error);
       }
     }
+  }
+
+  // Update existing entry (creates an offline update record)
+  async updateExistingEntry(entryId: number, updates: Partial<EntryData>): Promise<string> {
+    const storage = await this.getStorage();
+    
+    // Create a new offline entry for the update
+    const tempId = `update_${entryId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const offlineUpdate: OfflineEntry = {
+      id: entryId,
+      tempId,
+      title: updates.title || '',
+      content: updates.content || '',
+      type: updates.type || 'note',
+      date: updates.date || new Date().toISOString(),
+      structuredData: updates.structuredData || {},
+      userId: updates.userId || 'offline-user',
+      createdAt: updates.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      synced: false,
+      action: 'update',
+      timestamp: Date.now()
+    };
+
+    await storage.setItem(`${this.ENTRY_PREFIX}${tempId}`, JSON.stringify(offlineUpdate));
+    
+    // Also update the cached entry if it exists
+    const cachedKey = `${this.CACHED_ENTRY_PREFIX}${entryId}`;
+    const cachedData = await storage.getItem(cachedKey);
+    if (cachedData) {
+      try {
+        const cachedEntry = JSON.parse(cachedData);
+        const updatedCached = { ...cachedEntry, ...updates, updatedAt: new Date().toISOString() };
+        await storage.setItem(cachedKey, JSON.stringify(updatedCached));
+      } catch (error) {
+        console.error('Failed to update cached entry:', error);
+      }
+    }
+
+    return tempId;
   }
 
   // Delete offline entry

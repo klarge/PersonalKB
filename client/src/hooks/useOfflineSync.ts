@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { offlineStorage } from '@/lib/offline-storage';
+import { offlineStorageMobile } from '@/lib/offline-storage-mobile';
 
 export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -31,7 +31,7 @@ export function useOfflineSync() {
 
   const checkPendingItems = async () => {
     try {
-      const unsynced = await offlineStorage.getUnsyncedEntries();
+      const unsynced = await offlineStorageMobile.getUnsyncedEntries();
       setPendingCount(unsynced.length);
     } catch (error) {
       console.error('Error checking pending items:', error);
@@ -41,7 +41,7 @@ export function useOfflineSync() {
   const syncMutation = useMutation({
     mutationFn: async () => {
       setSyncInProgress(true);
-      const unsyncedEntries = await offlineStorage.getUnsyncedEntries();
+      const unsyncedEntries = await offlineStorageMobile.getUnsyncedEntries();
       
       for (const entry of unsyncedEntries) {
         try {
@@ -62,7 +62,7 @@ export function useOfflineSync() {
             const data = await response.json();
             
             // Mark as synced with server ID
-            await offlineStorage.markAsSynced(entry.tempId!, data.id);
+            await offlineStorageMobile.markAsSynced(entry.tempId!, data.id);
           } else if (entry.action === 'update' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
               method: 'PUT',
@@ -75,14 +75,14 @@ export function useOfflineSync() {
             });
             
             if (!response.ok) throw new Error('Failed to update entry');
-            await offlineStorage.markAsSynced(entry.tempId!);
+            await offlineStorageMobile.markAsSynced(entry.tempId!);
           } else if (entry.action === 'delete' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
               method: 'DELETE'
             });
             
             if (!response.ok) throw new Error('Failed to delete entry');
-            await offlineStorage.deleteOfflineEntry(entry.tempId!);
+            await offlineStorageMobile.deleteOfflineEntry(entry.tempId!);
           }
         } catch (error) {
           console.error(`Failed to sync entry ${entry.tempId}:`, error);
@@ -116,7 +116,7 @@ export function useOfflineSync() {
     structuredData?: any;
   }) => {
     try {
-      const tempId = await offlineStorage.saveOfflineEntry({
+      const tempId = await offlineStorageMobile.saveOfflineEntry({
         ...entryData,
         structuredData: entryData.structuredData || {},
         action: 'create'

@@ -144,6 +144,57 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
     }
   });
 
+  // Update entry mutation (works offline too)
+  const updateOfflineEntryMutation = useMutation({
+    mutationFn: async (updateData: {
+      id: number;
+      title: string;
+      content: string;
+      structuredData?: any;
+    }) => {
+      if (isOnline) {
+        // If online, update normally via API
+        const response = await fetch(`/api/entries/${updateData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: updateData.title,
+            content: updateData.content,
+            structuredData: updateData.structuredData || {}
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update entry');
+        return await response.json();
+      } else {
+        // If offline, save update to offline storage
+        const tempId = await offlineStorageMobile.updateExistingEntry(updateData.id, {
+          title: updateData.title,
+          content: updateData.content,
+          structuredData: updateData.structuredData || {},
+          updatedAt: new Date().toISOString()
+        });
+        
+        // Return updated entry data
+        return {
+          ...updateData,
+          tempId,
+          userId: 'offline-user',
+          updatedAt: new Date().toISOString()
+        };
+      }
+    },
+    onSuccess: () => {
+      // Refresh queries after successful update
+      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+      
+      // If offline, reload offline entries
+      if (!isOnline) {
+        loadOfflineEntries();
+      }
+    }
+  });
+
   const loadOfflineEntries = async () => {
     setIsLoadingOffline(true);
     try {
@@ -173,7 +224,9 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       error: onlineQuery.error,
       isOnline: true,
       createEntry: createOfflineEntryMutation.mutate,
-      isCreating: createOfflineEntryMutation.isPending
+      isCreating: createOfflineEntryMutation.isPending,
+      updateEntry: updateOfflineEntryMutation.mutate,
+      isUpdating: updateOfflineEntryMutation.isPending
     };
   } else {
     return {
@@ -182,7 +235,9 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       error: null,
       isOnline: false,
       createEntry: createOfflineEntryMutation.mutate,
-      isCreating: createOfflineEntryMutation.isPending
+      isCreating: createOfflineEntryMutation.isPending,
+      updateEntry: updateOfflineEntryMutation.mutate,
+      isUpdating: updateOfflineEntryMutation.isPending
     };
   }
 }
