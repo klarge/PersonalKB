@@ -47,12 +47,21 @@ function getConnectionCount(content: string) {
 
 function cleanContentForPreview(content: string) {
   // Remove image markdown patterns from content preview
-  // Handle both standard markdown and the specific format used by the app
-  const cleaned = content
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '') // Remove image markdown patterns
+  // More aggressive pattern to catch all variations
+  let cleaned = content;
+  
+  // Remove any line that contains an image pattern
+  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
+  
+  // Remove lines that are just image URLs
+  cleaned = cleaned.replace(/https:\/\/.*?\/uploads\/[a-f0-9]+/g, '');
+  
+  // Clean up remaining whitespace
+  cleaned = cleaned
     .replace(/\n+/g, ' ') // Replace line breaks with spaces
     .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
     .trim();
+    
   return cleaned;
 }
 
