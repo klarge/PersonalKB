@@ -17,32 +17,47 @@ export default function HashtagRenderer({ content }: HashtagRendererProps) {
   });
 
   const renderContentWithLinks = (text: string) => {
-    // Split by hashtags, images, and preserve other content
-    // Updated regex to match hashtags, [[links]], and markdown images
-    const parts = text.split(/(#\[\[([^\]]+)\]\]|#[^\s\n]+|!\[([^\]]*)\]\(([^)]+)\))/g);
+    // First replace all image markdown with a placeholder, then process normally
+    let processedText = text;
+    const imageMatches: Array<{match: string, element: JSX.Element}> = [];
     
-    return parts.map((part, index) => {
-      // Skip if part is undefined or empty
-      if (!part) return null;
+    // Find all image patterns and replace with placeholders
+    const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    let imageMatch;
+    let imageIndex = 0;
+    
+    while ((imageMatch = imageRegex.exec(text)) !== null) {
+      const [fullMatch, altText, imageSrc] = imageMatch;
+      const placeholder = `__IMAGE_PLACEHOLDER_${imageIndex}__`;
       
-      // Handle markdown images ![alt](src) - render image and return early
-      const imageMatch = part.match(/!\[([^\]]*)\]\(([^)]+)\)/);
-      if (imageMatch) {
-        const [, altText, imageSrc] = imageMatch;
-        return (
+      imageMatches.push({
+        match: placeholder,
+        element: (
           <img 
-            key={index}
+            key={`img-${imageIndex}`}
             src={imageSrc}
             alt={altText}
             className="max-w-full h-auto rounded-lg shadow-sm my-2"
             style={{ maxHeight: '400px' }}
           />
-        );
-      }
+        )
+      });
       
-      // Skip rendering the markdown text if it's an image pattern
-      if (part.startsWith('![') && part.includes('](') && part.endsWith(')')) {
-        return null;
+      processedText = processedText.replace(fullMatch, placeholder);
+      imageIndex++;
+    }
+    
+    // Now split by hashtags and preserve other content
+    const parts = processedText.split(/(#\[\[([^\]]+)\]\]|#[^\s\n]+|__IMAGE_PLACEHOLDER_\d+__)/g);
+    
+    return parts.map((part, index) => {
+      // Skip if part is undefined or empty
+      if (!part) return null;
+      
+      // Handle image placeholders
+      const imagePlaceholder = imageMatches.find(img => img.match === part);
+      if (imagePlaceholder) {
+        return imagePlaceholder.element;
       }
       
       if (part.startsWith('#[[') && part.endsWith(']]')) {
