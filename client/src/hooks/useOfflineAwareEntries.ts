@@ -108,39 +108,46 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         // If online, create normally via API
         const response = await fetch('/api/entries', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'credentials': 'include'
+          },
+          credentials: 'include',
           body: JSON.stringify(entryData)
         });
         
-        if (!response.ok) throw new Error('Failed to create entry');
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Failed to create entry: ${errorData}`);
+        }
         return await response.json();
       } else {
         // If offline, save to offline storage
         const tempId = await offlineStorageMobile.saveOfflineEntry({
-          ...entryData,
+          title: entryData.title,
+          content: entryData.content,
+          type: entryData.type,
+          date: entryData.date,
           structuredData: entryData.structuredData || {},
           action: 'create'
         });
         
-        // Return offline entry data
-        return {
-          id: 0,
-          tempId,
-          ...entryData,
-          userId: 'offline-user',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+        // Reload offline entries immediately to show new entry
+        await loadOfflineEntries();
+        
+        // Return success indicator
+        return { tempId, success: true };
       }
     },
     onSuccess: () => {
       // Refresh queries after successful creation
-      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
-      
-      // If offline, reload offline entries
-      if (!isOnline) {
-        loadOfflineEntries();
+      if (isOnline) {
+        queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+        queryClient.invalidateQueries({ queryKey });
       }
+    },
+    onError: (error) => {
+      console.error('Failed to create entry:', error);
     }
   });
 
@@ -156,7 +163,11 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         // If online, update normally via API
         const response = await fetch(`/api/entries/${updateData.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'credentials': 'include'
+          },
+          credentials: 'include',
           body: JSON.stringify({
             title: updateData.title,
             content: updateData.content,
@@ -169,29 +180,33 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       } else {
         // If offline, save update to offline storage
         const tempId = await offlineStorageMobile.updateExistingEntry(updateData.id, {
+          id: updateData.id,
           title: updateData.title,
           content: updateData.content,
+          type: 'note', // This should be passed from the caller
+          date: new Date().toISOString(),
           structuredData: updateData.structuredData || {},
+          userId: 'offline-user',
+          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
         
+        // Reload offline entries to show changes immediately
+        await loadOfflineEntries();
+        
         // Return updated entry data
-        return {
-          ...updateData,
-          tempId,
-          userId: 'offline-user',
-          updatedAt: new Date().toISOString()
-        };
+        return { tempId, success: true };
       }
     },
     onSuccess: () => {
       // Refresh queries after successful update
-      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
-      
-      // If offline, reload offline entries
-      if (!isOnline) {
-        loadOfflineEntries();
+      if (isOnline) {
+        queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+        queryClient.invalidateQueries({ queryKey });
       }
+    },
+    onError: (error) => {
+      console.error('Failed to update entry:', error);
     }
   });
 
