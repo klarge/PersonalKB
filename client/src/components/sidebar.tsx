@@ -79,7 +79,7 @@ export default function Sidebar() {
                 className={`flex items-center space-x-3 px-3 py-2 rounded-lg font-medium transition-colors ${
                   item.current
                     ? "bg-blue-50 text-primary"
-                    : "text-secondary hover:bg-gray-50 hover:text-dark"
+                    : "text-secondary hover:bg-blue-50 hover:text-primary"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -95,21 +95,21 @@ export default function Sidebar() {
         {/* Debug: Always show admin menu for testing */}
         <a
           href="/admin"
-          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
+          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-blue-50 hover:text-primary transition-colors"
         >
           <Shield className="h-4 w-4" />
           <span>Administration {user?.isAdmin ? '(Admin)' : '(Debug)'}</span>
         </a>
         <a
           href="#"
-          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
+          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-blue-50 hover:text-primary transition-colors"
         >
           <Settings className="h-4 w-4" />
           <span>Settings</span>
         </a>
         <a
           href="/api/logout"
-          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-gray-50 hover:text-dark transition-colors"
+          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-secondary hover:bg-blue-50 hover:text-primary transition-colors"
         >
           <LogOut className="h-4 w-4" />
           <span>Sign Out</span>
