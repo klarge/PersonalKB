@@ -560,6 +560,7 @@ export default function EntryPage() {
                 onClick={() => setIsEditing(!isEditing)}
                 variant="outline"
                 size="sm"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:bg-gray-900"
                 title={isEditing ? "View" : "Edit"}
               >
                 {isEditing ? <Eye className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
@@ -576,7 +577,7 @@ export default function EntryPage() {
                   disabled={deleteMutation.isPending}
                   variant="outline"
                   size="sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 dark:bg-gray-900 dark:border-gray-600"
                   title={deleteMutation.isPending ? "Deleting..." : "Delete"}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -591,7 +592,7 @@ export default function EntryPage() {
                   onClick={handleSave}
                   disabled={updateMutation.isPending || !title.trim()}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
                   title={updateMutation.isPending ? "Saving..." : "Save"}
                 >
                   <Save className="h-4 w-4" />
@@ -607,7 +608,7 @@ export default function EntryPage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg border shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-700 shadow-sm">
           <div className="p-6">
             {/* Title Input */}
             <div className="mb-6">
@@ -615,7 +616,8 @@ export default function EntryPage() {
                 placeholder={getPlaceholderText(entry?.type)}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400 bg-transparent"
+                className="w-full text-2xl font-semibold border-none px-0 focus:ring-0 placeholder:text-gray-400 bg-transparent dark:text-white dark:placeholder:text-gray-500"
+                readOnly={!isEditing}
                 minHeight={48}
                 maxHeight={120}
               />
@@ -662,7 +664,7 @@ export default function EntryPage() {
                   placeholder={getContentPlaceholder(entry?.type)}
                 />
               ) : (
-                <div className="min-h-[400px] p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="min-h-[400px] p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
                   <HashtagRenderer content={content || "No content yet. Click 'Edit' to add content."} />
                 </div>
               )}

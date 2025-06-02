@@ -255,7 +255,7 @@ export default function WysiwygEditor({ content, onChange, placeholder }: Wysiwy
           contentEditable
           onInput={updateContent}
           onPaste={handlePaste}
-          className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 prose prose-sm max-w-none overflow-hidden resize-none"
+          className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white prose prose-sm max-w-none overflow-hidden resize-none"
           style={{ 
             wordBreak: 'break-word',
             minHeight: '400px',
