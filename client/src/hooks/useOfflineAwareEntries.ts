@@ -47,9 +47,18 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
   // Load offline entries when offline or as fallback
   useEffect(() => {
     if (!isOnline) {
+      console.log('Going offline, loading cached entries...');
       loadOfflineEntries();
+    } else {
+      console.log('Going online, will use server data');
     }
   }, [isOnline, type, searchQuery, limit, offset]);
+
+  // Also load offline entries on component mount regardless of online status
+  useEffect(() => {
+    console.log('Component mounted, preloading offline entries for fallback');
+    loadOfflineEntries();
+  }, []);
 
   // Cache online entries for offline use
   useEffect(() => {
@@ -210,9 +219,13 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
 
   // Return appropriate data based on online status
   if (isOnline) {
+    // When online, prefer server data but fallback to offline if server data is empty
+    const dataToShow = (onlineQuery.data && onlineQuery.data.length > 0) ? onlineQuery.data : offlineEntries;
+    console.log('Online mode: showing', dataToShow.length, 'entries');
+    
     return {
-      data: onlineQuery.data || [],
-      isLoading: onlineQuery.isLoading,
+      data: dataToShow,
+      isLoading: onlineQuery.isLoading && isLoadingOffline,
       error: onlineQuery.error,
       isOnline: true,
       createEntry: createOfflineEntryMutation.mutate,
@@ -221,6 +234,9 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       isUpdating: updateOfflineEntryMutation.isPending
     };
   } else {
+    // When offline, always show cached/offline entries
+    console.log('Offline mode: showing', offlineEntries.length, 'cached entries');
+    
     return {
       data: offlineEntries,
       isLoading: isLoadingOffline,

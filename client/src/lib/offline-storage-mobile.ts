@@ -57,19 +57,47 @@ const getMobileStorage = async (): Promise<MobileStorage> => {
       },
     };
   } else {
-    // Fallback to localStorage for web
+    // Fallback to localStorage for web with enhanced debugging
+    console.log('Using localStorage for offline storage (web)');
     return {
       setItem: async (key: string, value: string) => {
-        localStorage.setItem(key, value);
+        try {
+          localStorage.setItem(key, value);
+          console.log(`✓ Saved to localStorage: ${key}`);
+        } catch (error) {
+          console.error(`✗ Failed to save to localStorage: ${key}`, error);
+          throw error;
+        }
       },
       getItem: async (key: string) => {
-        return localStorage.getItem(key);
+        try {
+          const value = localStorage.getItem(key);
+          console.log(`✓ Retrieved from localStorage: ${key}`, value ? 'found' : 'not found');
+          return value;
+        } catch (error) {
+          console.error(`✗ Failed to get from localStorage: ${key}`, error);
+          return null;
+        }
       },
       removeItem: async (key: string) => {
-        localStorage.removeItem(key);
+        try {
+          localStorage.removeItem(key);
+          console.log(`✓ Removed from localStorage: ${key}`);
+        } catch (error) {
+          console.error(`✗ Failed to remove from localStorage: ${key}`, error);
+        }
       },
       keys: async () => {
-        return Object.keys(localStorage);
+        try {
+          const keys = Object.keys(localStorage).filter(key => 
+            key.startsWith('offline_entry_') || key.startsWith('cached_entry_')
+          );
+          console.log(`✓ Found ${keys.length} offline storage keys in localStorage`);
+          return keys;
+        } catch (error) {
+          console.error('✗ Failed to get localStorage keys', error);
+          return [];
+        }
       },
     };
   }
