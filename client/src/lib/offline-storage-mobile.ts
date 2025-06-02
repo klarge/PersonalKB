@@ -100,7 +100,9 @@ class OfflineStorageMobile {
       timestamp: Date.now()
     };
 
+    console.log('Saving offline entry:', tempId, offlineEntry);
     await storage.setItem(`${this.ENTRY_PREFIX}${tempId}`, JSON.stringify(offlineEntry));
+    console.log('Offline entry saved successfully');
     return tempId;
   }
 
@@ -218,8 +220,14 @@ class OfflineStorageMobile {
 
   // Filter entries by type
   async getEntriesByType(type?: 'journal' | 'note' | 'person' | 'place' | 'thing'): Promise<OfflineEntry[]> {
+    console.log('Getting entries by type:', type);
     const allEntries = await this.getAllOfflineEntries();
-    return type ? allEntries.filter(entry => entry.type === type) : allEntries;
+    console.log('All offline entries found:', allEntries.length, allEntries);
+    
+    const filteredEntries = type ? allEntries.filter(entry => entry.type === type) : allEntries;
+    console.log('Filtered entries for type', type, ':', filteredEntries.length, filteredEntries);
+    
+    return filteredEntries;
   }
 
   // Search entries

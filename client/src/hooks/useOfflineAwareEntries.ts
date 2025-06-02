@@ -46,38 +46,9 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
 
   // Load offline entries when offline or as fallback
   useEffect(() => {
-    async function loadOfflineEntries() {
-      if (!isOnline) {
-        setIsLoadingOffline(true);
-        try {
-          let filteredEntries: OfflineEntry[];
-          
-          if (searchQuery && searchQuery.trim()) {
-            filteredEntries = await offlineStorageMobile.searchEntries(searchQuery);
-          } else {
-            filteredEntries = await offlineStorageMobile.getEntriesByType(type);
-          }
-
-          // Convert to EntryData format
-          const convertedEntries = filteredEntries.map(convertOfflineToEntry);
-
-          // Apply pagination if specified
-          if (limit) {
-            const start = offset || 0;
-            convertedEntries.splice(start + limit);
-          }
-
-          setOfflineEntries(convertedEntries);
-        } catch (error) {
-          console.error('Error loading offline entries:', error);
-          setOfflineEntries([]);
-        } finally {
-          setIsLoadingOffline(false);
-        }
-      }
+    if (!isOnline) {
+      loadOfflineEntries();
     }
-
-    loadOfflineEntries();
   }, [isOnline, type, searchQuery, limit, offset]);
 
   // Cache online entries for offline use
@@ -213,6 +184,8 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
   const loadOfflineEntries = async () => {
     setIsLoadingOffline(true);
     try {
+      console.log('Loading offline entries, type:', type, 'searchQuery:', searchQuery);
+      
       let filteredEntries: OfflineEntry[];
       
       if (searchQuery && searchQuery.trim()) {
@@ -221,7 +194,11 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         filteredEntries = await offlineStorageMobile.getEntriesByType(type);
       }
 
+      console.log('Retrieved offline entries:', filteredEntries.length, filteredEntries);
+
       const convertedEntries = filteredEntries.map(convertOfflineToEntry);
+      console.log('Converted entries:', convertedEntries);
+      
       setOfflineEntries(convertedEntries);
     } catch (error) {
       console.error('Error loading offline entries:', error);
