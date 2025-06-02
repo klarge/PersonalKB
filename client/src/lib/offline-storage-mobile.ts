@@ -358,7 +358,7 @@ class OfflineStorageMobile {
     );
   }
 
-  // Mark entry as synced
+  // Mark entry as synced and handle ID reconciliation
   async markAsSynced(tempId: string, serverId?: number): Promise<void> {
     const storage = await this.getStorage();
     const entryKey = `${this.ENTRY_PREFIX}${tempId}`;
@@ -367,14 +367,77 @@ class OfflineStorageMobile {
     if (entryData) {
       try {
         const entry = JSON.parse(entryData);
+        console.log(`📱 Marking entry as synced: ${tempId} -> ${serverId}`);
+        
         entry.synced = true;
-        if (serverId) {
+        
+        if (serverId && entry.action === 'create') {
+          // For new entries, replace temp ID with server ID
           entry.id = serverId;
+          
+          // Remove the old offline entry
+          await storage.removeItem(entryKey);
+          
+          // Create a cached version with the server ID
+          const cachedKey = `${this.CACHED_ENTRY_PREFIX}${serverId}`;
+          await storage.setItem(cachedKey, JSON.stringify({
+            ...entry,
+            tempId: `cached_${serverId}`,
+            synced: true,
+            timestamp: Date.now(),
+            action: 'create'
+          }));
+          
+          console.log(`📱 Created cached entry with server ID: ${serverId}`);
+          
+          // Update any references to this entry in other entries
+          await this.updateEntryReferences(tempId, serverId);
+        } else {
+          // For updates, just mark as synced
+          await storage.setItem(entryKey, JSON.stringify(entry));
         }
-        await storage.setItem(entryKey, JSON.stringify(entry));
+        
       } catch (error) {
-        console.error('Failed to mark entry as synced:', error);
+        console.error('📱 Failed to mark entry as synced:', error);
       }
+    }
+  }
+
+  // Update references to an entry when its ID changes
+  private async updateEntryReferences(oldTempId: string, newServerId: number): Promise<void> {
+    try {
+      const allEntries = await this.getAllOfflineEntries();
+      
+      for (const entry of allEntries) {
+        let needsUpdate = false;
+        let updatedContent = entry.content;
+        
+        // Update hashtag references in content
+        const oldRef = `#[[${oldTempId}]]`;
+        const newRef = `#[[${newServerId}]]`;
+        
+        if (updatedContent.includes(oldRef)) {
+          updatedContent = updatedContent.replace(new RegExp(oldRef, 'g'), newRef);
+          needsUpdate = true;
+        }
+        
+        if (needsUpdate) {
+          const storage = await this.getStorage();
+          const key = entry.synced ? 
+            `${this.CACHED_ENTRY_PREFIX}${entry.id}` : 
+            `${this.ENTRY_PREFIX}${entry.tempId}`;
+          
+          await storage.setItem(key, JSON.stringify({
+            ...entry,
+            content: updatedContent,
+            timestamp: Date.now()
+          }));
+          
+          console.log(`📱 Updated references in entry: ${entry.title}`);
+        }
+      }
+    } catch (error) {
+      console.error('📱 Failed to update entry references:', error);
     }
   }
 

@@ -42,9 +42,15 @@ export function useOfflineSync() {
     mutationFn: async () => {
       setSyncInProgress(true);
       const unsyncedEntries = await offlineStorageMobile.getUnsyncedEntries();
+      console.log(`🔄 Starting sync for ${unsyncedEntries.length} entries`);
+      
+      let successCount = 0;
+      let errorCount = 0;
       
       for (const entry of unsyncedEntries) {
         try {
+          console.log(`🔄 Syncing entry: ${entry.title} (${entry.action})`);
+          
           if (entry.action === 'create') {
             const response = await fetch('/api/entries', {
               method: 'POST',
@@ -58,11 +64,18 @@ export function useOfflineSync() {
               })
             });
             
-            if (!response.ok) throw new Error('Failed to sync entry');
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed to sync entry: ${response.status} ${errorText}`);
+            }
+            
             const data = await response.json();
             
-            // Mark as synced with server ID
+            // Mark as synced with server ID and handle reconciliation
+            console.log(`✓ Created entry on server: ${entry.tempId} -> server ID: ${data.id}`);
             await offlineStorageMobile.markAsSynced(entry.tempId!, data.id);
+            successCount++;
+            
           } else if (entry.action === 'update' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
               method: 'PUT',
@@ -74,23 +87,38 @@ export function useOfflineSync() {
               })
             });
             
-            if (!response.ok) throw new Error('Failed to update entry');
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed to update entry: ${response.status} ${errorText}`);
+            }
+            
+            console.log(`✓ Updated entry on server: ${entry.id}`);
             await offlineStorageMobile.markAsSynced(entry.tempId!);
+            successCount++;
+            
           } else if (entry.action === 'delete' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
               method: 'DELETE'
             });
             
-            if (!response.ok) throw new Error('Failed to delete entry');
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed to delete entry: ${response.status} ${errorText}`);
+            }
+            
+            console.log(`✓ Deleted entry on server: ${entry.id}`);
             await offlineStorageMobile.deleteOfflineEntry(entry.tempId!);
+            successCount++;
           }
         } catch (error) {
-          console.error(`Failed to sync entry ${entry.tempId}:`, error);
+          console.error(`✗ Failed to sync entry ${entry.tempId}:`, error);
+          errorCount++;
           // Continue with other entries even if one fails
         }
       }
       
-      return true;
+      console.log(`🔄 Sync complete: ${successCount} success, ${errorCount} errors`);
+      return { successCount, errorCount };
     },
     onSuccess: () => {
       // Refresh all entry queries after successful sync
