@@ -155,6 +155,12 @@ export default function EntryPage() {
   const getStructuredFields = () => {
     if (!entry?.type) return null;
 
+    const getFieldClassName = () => {
+      return !isEditing 
+        ? "bg-gray-50 dark:bg-gray-800 cursor-default text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700" 
+        : "dark:bg-gray-800 dark:border-gray-600 dark:text-white";
+    };
+
     switch (entry.type) {
       case "person":
         return (
@@ -167,7 +173,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("name", e.target.value)}
                 placeholder="Enter full name"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -178,7 +184,7 @@ export default function EntryPage() {
                 value={structuredData.dateOfBirth || ""}
                 onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -189,7 +195,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("phone", e.target.value)}
                 placeholder="Phone number"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -201,7 +207,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("email", e.target.value)}
                 placeholder="Email address"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div className="col-span-2">
@@ -212,7 +218,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("address", e.target.value)}
                 placeholder="Home address"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -223,7 +229,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("occupation", e.target.value)}
                 placeholder="Job title/profession"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -234,7 +240,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("company", e.target.value)}
                 placeholder="Company name"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
           </div>
@@ -251,7 +257,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("address", e.target.value)}
                 placeholder="Full address"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -262,7 +268,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("category", e.target.value)}
                 placeholder="e.g., Restaurant, Park, Office"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -274,7 +280,7 @@ export default function EntryPage() {
                 onChange={(e) => updateStructuredField("website", e.target.value)}
                 placeholder="Website URL"
                 readOnly={!isEditing}
-                className={!isEditing ? "bg-gray-50 cursor-default" : ""}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -284,6 +290,8 @@ export default function EntryPage() {
                 value={structuredData.phone || ""}
                 onChange={(e) => updateStructuredField("phone", e.target.value)}
                 placeholder="Phone number"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -297,6 +305,8 @@ export default function EntryPage() {
                 value={structuredData.rating || ""}
                 onChange={(e) => updateStructuredField("rating", e.target.value)}
                 placeholder="1-5 stars"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -306,6 +316,8 @@ export default function EntryPage() {
                 type="date"
                 value={structuredData.visitedDate || ""}
                 onChange={(e) => updateStructuredField("visitedDate", e.target.value)}
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
           </div>
@@ -321,6 +333,8 @@ export default function EntryPage() {
                 value={structuredData.brand || ""}
                 onChange={(e) => updateStructuredField("brand", e.target.value)}
                 placeholder="Brand name"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -330,6 +344,8 @@ export default function EntryPage() {
                 value={structuredData.model || ""}
                 onChange={(e) => updateStructuredField("model", e.target.value)}
                 placeholder="Model name/number"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -339,6 +355,8 @@ export default function EntryPage() {
                 value={structuredData.category || ""}
                 onChange={(e) => updateStructuredField("category", e.target.value)}
                 placeholder="e.g., Electronics, Book, Tool"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -350,6 +368,8 @@ export default function EntryPage() {
                 value={structuredData.price || ""}
                 onChange={(e) => updateStructuredField("price", e.target.value)}
                 placeholder="Purchase price"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -359,6 +379,8 @@ export default function EntryPage() {
                 type="date"
                 value={structuredData.purchaseDate || ""}
                 onChange={(e) => updateStructuredField("purchaseDate", e.target.value)}
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -368,6 +390,8 @@ export default function EntryPage() {
                 value={structuredData.location || ""}
                 onChange={(e) => updateStructuredField("location", e.target.value)}
                 placeholder="Where is it stored?"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -377,6 +401,8 @@ export default function EntryPage() {
                 value={structuredData.serialNumber || ""}
                 onChange={(e) => updateStructuredField("serialNumber", e.target.value)}
                 placeholder="Serial/ID number"
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
             <div>
@@ -386,6 +412,8 @@ export default function EntryPage() {
                 type="date"
                 value={structuredData.warranty || ""}
                 onChange={(e) => updateStructuredField("warranty", e.target.value)}
+                readOnly={!isEditing}
+                className={getFieldClassName()}
               />
             </div>
           </div>
