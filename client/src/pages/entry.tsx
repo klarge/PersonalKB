@@ -61,7 +61,7 @@ export default function EntryPage() {
     }
 
     loadEntry();
-  }, [entryId, isToday, getEntry]);
+  }, [entryId, isToday]); // Removed getEntry from dependencies to prevent infinite loop
 
   // Set edit mode based on entry status
   useEffect(() => {
@@ -444,11 +444,7 @@ export default function EntryPage() {
                 <span className="text-sm font-medium text-gray-600">
                   {getEntryTypeLabel()}
                 </span>
-                {entry?.id && !isMobile && (
-                  <Badge variant="secondary" className="text-xs">
-                    ID: {entry.id}
-                  </Badge>
-                )}
+
               </div>
             </div>
             
@@ -525,12 +521,10 @@ export default function EntryPage() {
           <div className="mb-6" ref={contentRef}>
             {isEditing ? (
               <div ref={editorRef}>
-                <AutoResizeTextarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                <WysiwygEditor
+                  content={content}
+                  onChange={setContent}
                   placeholder="Start writing..."
-                  minHeight={200}
-                  className="w-full border border-gray-300 rounded-lg p-3"
                 />
               </div>
             ) : (
