@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye } from "lucide-react";
+import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import WysiwygEditor from "@/components/wysiwyg-editor";
@@ -13,6 +13,7 @@ import AutoResizeTextarea from "@/components/auto-resize-textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
 import type { StoredEntry } from "@/lib/unified-storage";
+import { useQuery } from "@tanstack/react-query";
 
 export default function EntryPage() {
   const [match, params] = useRoute("/entry/:id");
@@ -34,6 +35,21 @@ export default function EntryPage() {
   const [entry, setEntry] = useState<StoredEntry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+
+  // Query for backlinks - entries that reference this one
+  const { data: backlinks = [] } = useQuery<StoredEntry[]>({
+    queryKey: ['/api/entries/backlinks', entry?.id],
+    queryFn: async () => {
+      if (!entry?.id) return [];
+      const response = await fetch(`/api/entries/backlinks/${entry.id}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!entry?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Load entry data using unified storage
   useEffect(() => {
@@ -528,7 +544,7 @@ export default function EntryPage() {
                 />
               </div>
             ) : (
-              <div className="prose max-w-none">
+              <div className="prose prose-gray dark:prose-invert max-w-none text-gray-900 dark:text-gray-100">
                 <HashtagRenderer content={content} />
               </div>
             )}
@@ -545,9 +561,47 @@ export default function EntryPage() {
             </div>
           )}
 
+          {/* Backlinks Section */}
+          {backlinks && backlinks.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <Link2 className="h-5 w-5 mr-2" />
+                Referenced by {backlinks.length} {backlinks.length === 1 ? 'entry' : 'entries'}
+              </h3>
+              <div className="space-y-3">
+                {backlinks.map((linkedEntry) => (
+                  <Link key={linkedEntry.id} href={`/entry/${linkedEntry.id}`}>
+                    <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {linkedEntry.type === 'journal' && <Calendar className="h-4 w-4 text-blue-500" />}
+                          {linkedEntry.type === 'note' && <StickyNote className="h-4 w-4 text-green-500" />}
+                          {linkedEntry.type === 'person' && <User className="h-4 w-4 text-purple-500" />}
+                          {linkedEntry.type === 'place' && <MapPin className="h-4 w-4 text-red-500" />}
+                          {linkedEntry.type === 'thing' && <Package className="h-4 w-4 text-orange-500" />}
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {linkedEntry.title}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(linkedEntry.date || linkedEntry.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {linkedEntry.content && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                          {linkedEntry.content.slice(0, 150)}...
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Entry Metadata */}
           {entry && (
-            <div className="text-sm text-gray-500 border-t border-gray-200 pt-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex justify-between">
                 <span>Created: {new Date(entry.createdAt || entry.date).toLocaleDateString()}</span>
                 {entry.updatedAt && (
