@@ -204,6 +204,65 @@ export default function WysiwygEditor({ content, onChange, placeholder }: Wysiwy
     e.target.value = "";
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Handle backspace/delete for images
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        
+        // Check if cursor is right after an image
+        if (e.key === 'Backspace' && range.collapsed) {
+          const startContainer = range.startContainer;
+          const startOffset = range.startOffset;
+          
+          // If we're in a text node, check the previous sibling
+          if (startContainer.nodeType === Node.TEXT_NODE && startOffset === 0) {
+            const prevSibling = startContainer.previousSibling;
+            if (prevSibling && prevSibling.nodeName.toLowerCase() === 'img') {
+              e.preventDefault();
+              prevSibling.remove();
+              updateContent();
+              return;
+            }
+          }
+          
+          // If we're directly after an element, check if it's an image
+          if (startContainer.nodeType === Node.ELEMENT_NODE) {
+            const element = startContainer as Element;
+            const prevElement = element.children[startOffset - 1];
+            if (prevElement && prevElement.nodeName.toLowerCase() === 'img') {
+              e.preventDefault();
+              prevElement.remove();
+              updateContent();
+              return;
+            }
+          }
+        }
+        
+        // Check if an image is selected
+        const selectedNode = selection.anchorNode;
+        if (selectedNode && selectedNode.nodeType === Node.ELEMENT_NODE) {
+          const element = selectedNode as Element;
+          if (element.nodeName.toLowerCase() === 'img') {
+            e.preventDefault();
+            element.remove();
+            updateContent();
+            return;
+          }
+        }
+        
+        // Check if selection contains an image
+        const fragment = range.cloneContents();
+        const images = fragment.querySelectorAll('img');
+        if (images.length > 0) {
+          // Let the default behavior handle it, then update content
+          setTimeout(() => updateContent(), 0);
+        }
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -255,6 +314,7 @@ export default function WysiwygEditor({ content, onChange, placeholder }: Wysiwy
           contentEditable
           onInput={updateContent}
           onPaste={handlePaste}
+          onKeyDown={handleKeyDown}
           className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white prose prose-sm max-w-none overflow-hidden resize-none"
           style={{ 
             wordBreak: 'break-word',
