@@ -99,7 +99,7 @@ export default function EntryPage() {
       });
       // Invalidate all entry-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/search"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/entries/autocomplete"] });
       if (isToday) {
         queryClient.invalidateQueries({ queryKey: ["/api/entries/today"] });
@@ -129,7 +129,7 @@ export default function EntryPage() {
       });
       // Invalidate all entry-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/search"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/entries/autocomplete"] });
       setLocation("/");
     },
