@@ -508,6 +508,8 @@ export default function EntryPage() {
                 placeholder="Enter title..."
                 className="text-2xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
                 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}
+                autoFocus={false}
+                disabled={false}
               />
             ) : (
               <h1 className="text-2xl font-bold text-gray-900">
@@ -523,10 +525,12 @@ export default function EntryPage() {
           <div className="mb-6" ref={contentRef}>
             {isEditing ? (
               <div ref={editorRef}>
-                <WysiwygEditor
-                  content={content}
-                  onChange={setContent}
+                <AutoResizeTextarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
                   placeholder="Start writing..."
+                  minHeight={200}
+                  className="w-full border border-gray-300 rounded-lg p-3"
                 />
               </div>
             ) : (

@@ -42,7 +42,8 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
   const serverQuery = useQuery<any[]>({
     queryKey,
     enabled: isOnline && (!isSearchQuery || searchQuery.trim().length > 2),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - longer cache time
+    gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
   });
 
   // Load local entries function
