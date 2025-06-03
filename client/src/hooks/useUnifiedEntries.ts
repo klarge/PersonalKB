@@ -175,26 +175,9 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
         return await response.json();
         
       } else if (androidOfflineEnabled) {
-        // Android (online or offline): Create locally first
-        console.log('🔧 Creating offline entry with data:', entryData);
-        
-        const tempId = await unifiedStorage.createOfflineEntry({
-          title: entryData.title,
-          content: entryData.content,
-          type: entryData.type,
-          date: entryData.date,
-          structuredData: entryData.structuredData || {},
-          userId: 'current-user' // This should be the actual user ID
-        });
-        
-        console.log('🔧 Created offline entry with tempId:', tempId);
-        
-        // Force refresh local view immediately
-        await loadLocalEntries();
-        console.log('🔧 Refreshed local entries after creation');
-        
-        // If online, try to sync immediately
+        // Android: Create entry based on online status
         if (isOnline) {
+          // Online: Create directly on server (no local copy first)
           try {
             const response = await fetch('/api/entries', {
               method: 'POST',
@@ -208,14 +191,34 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
             
             if (response.ok) {
               const serverEntry = await response.json();
-              await unifiedStorage.markAsSynced(tempId, serverEntry.id);
+              // Cache the server entry locally
+              await unifiedStorage.cacheServerEntries([serverEntry]);
               await loadLocalEntries();
-              console.log('🔧 Entry created and synced immediately');
+              console.log('🔧 Entry created on server and cached locally');
+              return serverEntry;
+            } else {
+              throw new Error('Server creation failed');
             }
           } catch (error) {
-            console.log('🔧 Entry created offline, will sync later');
+            console.log('🔧 Server creation failed, creating offline instead');
+            // Fall through to offline creation
           }
         }
+        
+        // Offline or server failed: Create locally only
+        console.log('🔧 Creating offline entry with data:', entryData);
+        
+        const tempId = await unifiedStorage.createOfflineEntry({
+          title: entryData.title,
+          content: entryData.content,
+          type: entryData.type,
+          date: entryData.date,
+          structuredData: entryData.structuredData || {},
+          userId: 'current-user'
+        });
+        
+        console.log('🔧 Created offline entry with tempId:', tempId);
+        await loadLocalEntries();
         
         return { tempId, success: true };
       } else {
@@ -261,17 +264,9 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
         return await response.json();
         
       } else if (androidOfflineEnabled) {
-        // Android: Update locally
-        await unifiedStorage.updateEntry(updateData.id, {
-          title: updateData.title,
-          content: updateData.content,
-          structuredData: updateData.structuredData || {}
-        });
-        
-        await loadLocalEntries();
-        
-        // If online and it's a server entry, try to sync immediately
+        // Android: Update based on online status  
         if (isOnline && typeof updateData.id === 'number') {
+          // Online with server entry: Update server first
           try {
             const response = await fetch(`/api/entries/${updateData.id}`, {
               method: 'PUT',
@@ -288,14 +283,27 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
             });
             
             if (response.ok) {
-              await unifiedStorage.markAsSynced(updateData.id.toString());
+              const updatedEntry = await response.json();
+              // Update local cache with server response
+              await unifiedStorage.cacheServerEntries([updatedEntry]);
               await loadLocalEntries();
-              console.log('🔧 Entry updated and synced immediately');
+              console.log('🔧 Entry updated on server and cached locally');
+              return updatedEntry;
             }
           } catch (error) {
-            console.log('🔧 Entry updated offline, will sync later');
+            console.log('🔧 Server update failed, updating locally only');
           }
         }
+        
+        // Offline or server failed: Update locally only
+        await unifiedStorage.updateEntry(updateData.id, {
+          title: updateData.title,
+          content: updateData.content,
+          structuredData: updateData.structuredData || {}
+        });
+        
+        await loadLocalEntries();
+        console.log('🔧 Entry updated locally');
         
         return { success: true };
       } else {

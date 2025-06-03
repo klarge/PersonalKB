@@ -444,7 +444,7 @@ export default function EntryPage() {
                 <span className="text-sm font-medium text-gray-600">
                   {getEntryTypeLabel()}
                 </span>
-                {entry?.id && (
+                {entry?.id && !isMobile && (
                   <Badge variant="secondary" className="text-xs">
                     ID: {entry.id}
                   </Badge>

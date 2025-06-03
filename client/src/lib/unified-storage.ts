@@ -132,17 +132,12 @@ class UnifiedStorage {
     }
   }
 
-  // Cache server entries (replace existing cache)
+  // Cache server entries (replace existing cache with deduplication)
   async cacheServerEntries(serverEntries: any[]): Promise<void> {
     console.log(`📱 Caching ${serverEntries.length} server entries`);
     
     const existingEntries = await this.getAllEntries();
     const serverIds = new Set(serverEntries.map(e => e.id));
-    
-    // Keep offline-created entries and entries modified offline
-    const offlineEntries = existingEntries.filter(entry => 
-      entry.isOfflineCreated || entry.isModifiedOffline || !serverIds.has(entry.id)
-    );
     
     // Convert server entries to StoredEntry format
     const cachedEntries: StoredEntry[] = serverEntries.map(entry => ({
@@ -156,14 +151,38 @@ class UnifiedStorage {
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
       lastSyncedAt: new Date().toISOString(),
-      needsSync: false
+      needsSync: false,
+      isOfflineCreated: false,
+      isModifiedOffline: false,
+      isSynced: true
     }));
     
-    // Merge cached server entries with offline entries
-    const allEntries = [...cachedEntries, ...offlineEntries];
+    // Filter out offline entries that match server entries (to prevent duplicates)
+    const filteredOfflineEntries = existingEntries.filter(entry => {
+      // Keep if it's not a server entry
+      if (serverIds.has(entry.id)) return false;
+      
+      // Check for content-based duplicates (same title, content, type)
+      const hasMatchingServerEntry = serverEntries.some(serverEntry =>
+        serverEntry.title === entry.title &&
+        serverEntry.content === entry.content &&
+        serverEntry.type === entry.type
+      );
+      
+      if (hasMatchingServerEntry) {
+        console.log(`📱 Removing duplicate offline entry: ${entry.title}`);
+        return false;
+      }
+      
+      // Keep offline-created entries and entries modified offline that don't duplicate server content
+      return entry.isOfflineCreated || entry.isModifiedOffline;
+    });
+    
+    // Merge cached server entries with filtered offline entries
+    const allEntries = [...cachedEntries, ...filteredOfflineEntries];
     
     await this.saveAllEntries(allEntries);
-    console.log(`📱 Cached ${cachedEntries.length} server entries, kept ${offlineEntries.length} offline entries`);
+    console.log(`📱 Cached ${cachedEntries.length} server entries, kept ${filteredOfflineEntries.length} offline entries`);
   }
 
   // Create a new offline entry
