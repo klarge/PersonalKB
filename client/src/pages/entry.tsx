@@ -13,6 +13,7 @@ import { Link, useLocation } from "wouter";
 import WysiwygEditor from "@/components/wysiwyg-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
 import AutoResizeTextarea from "@/components/auto-resize-textarea";
+import PersonPhotoUpload from "@/components/person-photo-upload";
 import type { Entry } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -170,84 +171,98 @@ export default function EntryPage() {
     switch (entry.type) {
       case "person":
         return (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6">
+            {/* Profile Photo Section */}
             <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={structuredData.name || ""}
-                onChange={(e) => updateStructuredField("name", e.target.value)}
-                placeholder="Enter full name"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
+              <Label>Profile Photo</Label>
+              <PersonPhotoUpload
+                entryId={entry.id}
+                currentPhotoUrl={structuredData.photoUrl}
+                onPhotoUpdate={(photoUrl: string | null) => updateStructuredField("photoUrl", photoUrl)}
+                isEditing={isEditing}
               />
             </div>
-            <div>
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <Input
-                id="dateOfBirth"
-                type="date"
-                value={structuredData.dateOfBirth || ""}
-                onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={structuredData.phone || ""}
-                onChange={(e) => updateStructuredField("phone", e.target.value)}
-                placeholder="Phone number"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={structuredData.email || ""}
-                onChange={(e) => updateStructuredField("email", e.target.value)}
-                placeholder="Email address"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div className="col-span-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={structuredData.address || ""}
-                onChange={(e) => updateStructuredField("address", e.target.value)}
-                placeholder="Home address"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="occupation">Occupation</Label>
-              <Input
-                id="occupation"
-                value={structuredData.occupation || ""}
-                onChange={(e) => updateStructuredField("occupation", e.target.value)}
-                placeholder="Job title/profession"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
-            </div>
-            <div>
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                value={structuredData.company || ""}
-                onChange={(e) => updateStructuredField("company", e.target.value)}
-                placeholder="Company name"
-                readOnly={!isEditing}
-                className={getFieldClassName()}
-              />
+            
+            {/* Personal Details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={structuredData.name || ""}
+                  onChange={(e) => updateStructuredField("name", e.target.value)}
+                  placeholder="Enter full name"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={structuredData.dateOfBirth || ""}
+                  onChange={(e) => updateStructuredField("dateOfBirth", e.target.value)}
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={structuredData.phone || ""}
+                  onChange={(e) => updateStructuredField("phone", e.target.value)}
+                  placeholder="Phone number"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={structuredData.email || ""}
+                  onChange={(e) => updateStructuredField("email", e.target.value)}
+                  placeholder="Email address"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  value={structuredData.address || ""}
+                  onChange={(e) => updateStructuredField("address", e.target.value)}
+                  placeholder="Home address"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input
+                  id="occupation"
+                  value={structuredData.occupation || ""}
+                  onChange={(e) => updateStructuredField("occupation", e.target.value)}
+                  placeholder="Job title/profession"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
+              <div>
+                <Label htmlFor="company">Company</Label>
+                <Input
+                  id="company"
+                  value={structuredData.company || ""}
+                  onChange={(e) => updateStructuredField("company", e.target.value)}
+                  placeholder="Company name"
+                  readOnly={!isEditing}
+                  className={getFieldClassName()}
+                />
+              </div>
             </div>
           </div>
         );
@@ -483,7 +498,8 @@ export default function EntryPage() {
     }
   };
 
-  const { icon, label, variant } = getEntryDisplay(entry?.type || "journal");
+  const entryDisplay = getEntryDisplay(entry?.type || "journal");
+  const { icon, label, variant } = entryDisplay;
 
   // Get placeholder text based on entry type
   const getPlaceholderText = (type?: string) => {
