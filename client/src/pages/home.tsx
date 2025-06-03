@@ -13,16 +13,15 @@ import HashtagPreview from "@/components/hashtag-preview";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
-import { useOfflineSync } from "@/hooks/useOfflineSync";
-import { useOfflineCache } from "@/hooks/useOfflineCache";
+import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
+import { useUnifiedSync } from "@/hooks/useUnifiedSync";
 import PaginatedEntryList from "@/components/paginated-entry-list";
-import type { EntryData } from "@/lib/offline-storage-mobile";
+import type { StoredEntry } from "@/lib/unified-storage";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const { isOnline, pendingCount } = useOfflineSync();
+  const { isOnline, pendingCount } = useUnifiedSync();
 
   // Debounce search query to improve performance
   useEffect(() => {
@@ -32,9 +31,6 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  
-  // Enable automatic caching of all entries when online
-  useOfflineCache();
 
   // Check if running on Android for different loading strategies
   const isAndroid = () => {
@@ -42,37 +38,37 @@ export default function Home() {
     return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
   };
 
-  // Use offline-aware data fetching with pagination on web only
-  const allEntriesQuery = useOfflineAwareEntries({ 
+  // Use unified data fetching with pagination on web only
+  const allEntriesQuery = useUnifiedEntries({ 
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const journalEntriesQuery = useOfflineAwareEntries({ 
+  const journalEntriesQuery = useUnifiedEntries({ 
     type: "journal",
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const noteEntriesQuery = useOfflineAwareEntries({ 
+  const noteEntriesQuery = useUnifiedEntries({ 
     type: "note",
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const peopleEntriesQuery = useOfflineAwareEntries({ 
+  const peopleEntriesQuery = useUnifiedEntries({ 
     type: "person",
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const placeEntriesQuery = useOfflineAwareEntries({ 
+  const placeEntriesQuery = useUnifiedEntries({ 
     type: "place",
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const thingEntriesQuery = useOfflineAwareEntries({ 
+  const thingEntriesQuery = useUnifiedEntries({ 
     type: "thing",
     enablePagination: !isAndroid(),
     limit: isAndroid() ? undefined : 30
   });
-  const searchEntriesQuery = useOfflineAwareEntries({ 
+  const searchEntriesQuery = useUnifiedEntries({ 
     searchQuery: debouncedSearchQuery.trim().length > 0 ? debouncedSearchQuery : undefined 
   });
 

@@ -14,7 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { useUnifiedSync } from "@/hooks/useUnifiedSync";
 import { Badge } from "@/components/ui/badge";
 import ChangePasswordDialog from "@/components/change-password-dialog";
 
@@ -22,7 +22,7 @@ export default function SettingsMenu() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
-  const { isOnline, pendingCount, triggerSync } = useOfflineSync();
+  const { isOnline, pendingCount, syncInProgress, triggerSync } = useUnifiedSync();
 
   const handleExport = () => {
     const link = document.createElement('a');
