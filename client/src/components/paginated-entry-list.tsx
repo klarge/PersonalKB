@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
-import type { EntryData } from "@/lib/offline-storage-mobile";
+import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
+import type { StoredEntry } from "@/lib/unified-storage";
 
 interface PaginatedEntryListProps {
   type?: 'journal' | 'note' | 'person' | 'place' | 'thing';
   searchQuery?: string;
-  children: (entries: EntryData[], isLoading: boolean) => React.ReactNode;
+  children: (entries: StoredEntry[], isLoading: boolean) => React.ReactNode;
 }
 
 export default function PaginatedEntryList({ type, searchQuery, children }: PaginatedEntryListProps) {
-  const [allLoadedEntries, setAllLoadedEntries] = useState<EntryData[]>([]);
+  const [allLoadedEntries, setAllLoadedEntries] = useState<StoredEntry[]>([]);
   const [currentOffset, setCurrentOffset] = useState(0);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   
@@ -24,14 +24,14 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
   };
 
   // For Android, load all entries without pagination
-  const androidQuery = useOfflineAwareEntries({
+  const androidQuery = useUnifiedEntries({
     type,
     searchQuery,
     enablePagination: false
   });
 
   // For web, load entries with pagination
-  const webQuery = useOfflineAwareEntries({
+  const webQuery = useUnifiedEntries({
     type,
     searchQuery,
     limit: ENTRIES_PER_PAGE,
@@ -53,7 +53,7 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
         // Subsequent loads - append new entries
         setAllLoadedEntries(prev => {
           const newEntries = webQuery.data.filter(
-            newEntry => !prev.some(existingEntry => existingEntry.id === newEntry.id)
+            (newEntry: StoredEntry) => !prev.some(existingEntry => existingEntry.id === newEntry.id)
           );
           return [...prev, ...newEntries];
         });
@@ -77,7 +77,7 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
   };
 
   // Determine what entries to show and loading state
-  let entriesToShow: EntryData[];
+  let entriesToShow: StoredEntry[];
   let isLoading: boolean;
   let canLoadMore: boolean;
 
