@@ -244,12 +244,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchEntries(userId: string, query: string, type?: "journal" | "note" | "person" | "place" | "thing"): Promise<Entry[]> {
-    const searchTerm = `%${query}%`;
+    const searchTerm = `%${query.toLowerCase()}%`;
     let whereClause = and(
       eq(entries.userId, userId),
       or(
-        like(entries.title, searchTerm),
-        like(entries.content, searchTerm)
+        sql`LOWER(${entries.title}) LIKE ${searchTerm}`,
+        sql`LOWER(${entries.content}) LIKE ${searchTerm}`
       )
     );
 
