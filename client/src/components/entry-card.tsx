@@ -49,29 +49,34 @@ function cleanContentForPreview(content: string) {
   // Remove image references from content preview
   let cleaned = content;
   
-  // Remove markdown image syntax with multiline support
-  cleaned = cleaned.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  // Split into lines and process each line
+  const lines = cleaned.split('\n');
+  const filteredLines = lines.filter(line => {
+    const trimmed = line.trim();
+    
+    // Skip empty lines
+    if (!trimmed) return false;
+    
+    // Skip lines that start with ![
+    if (trimmed.startsWith('![')) return false;
+    
+    // Skip lines that contain long hex strings (32+ characters)
+    if (/[a-f0-9]{32,}/.test(trimmed)) return false;
+    
+    // Skip lines that are mostly hex characters, dashes, and URLs
+    if (trimmed.length > 20 && /^[a-f0-9\-\.\/:\(\)\s]+$/.test(trimmed)) return false;
+    
+    return true;
+  });
   
-  // Remove any lines that contain long hex strings (likely image filenames)
-  cleaned = cleaned.replace(/.*[a-f0-9]{20,}.*/g, '');
+  // Join filtered lines and clean up
+  cleaned = filteredLines.join(' ');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
   
-  // Clean up remaining whitespace and formatting
-  cleaned = cleaned
-    .split('\n')
-    .filter(line => {
-      const trimmed = line.trim();
-      // Skip empty lines
-      if (!trimmed) return false;
-      // Skip lines that are mostly hex characters
-      if (/^[a-f0-9\s\-\.\/\(\)]+$/.test(trimmed) && trimmed.length > 15) return false;
-      return true;
-    })
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Clean up whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
     
   return cleaned;
 }
