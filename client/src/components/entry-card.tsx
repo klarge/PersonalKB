@@ -49,23 +49,30 @@ function cleanContentForPreview(content: string) {
   // Remove image references from content preview
   let cleaned = content;
   
-  // Log the original content to debug
-  console.log('Original content:', content);
+  // Remove markdown image syntax with multiline support
+  cleaned = cleaned.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
   
-  // Remove all markdown image syntax: ![anything](anything)
-  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/gs, '');
+  // Remove any lines that contain long hex strings (likely image filenames)
+  cleaned = cleaned.replace(/.*[a-f0-9]{20,}.*/g, '');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
   
   // Clean up remaining whitespace and formatting
   cleaned = cleaned
-    .replace(/\n+/g, ' ') // Replace line breaks with spaces
-    .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
-    .replace(/^\s*[-*+]\s*/gm, '') // Remove list markers
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      // Skip empty lines
+      if (!trimmed) return false;
+      // Skip lines that are mostly hex characters
+      if (/^[a-f0-9\s\-\.\/\(\)]+$/.test(trimmed) && trimmed.length > 15) return false;
+      return true;
+    })
+    .join(' ')
+    .replace(/\s+/g, ' ')
     .trim();
     
-  console.log('Cleaned content:', cleaned);
   return cleaned;
 }
 
