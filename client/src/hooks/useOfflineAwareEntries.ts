@@ -64,11 +64,15 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
 
   // Load offline entries when offline or as fallback (Android only)
   useEffect(() => {
-    if (androidOfflineEnabled && !isOnline) {
-      console.log('Android going offline, loading cached entries...');
-      loadOfflineEntries();
-    } else if (androidOfflineEnabled) {
-      console.log('Android online, will use server data');
+    if (androidOfflineEnabled) {
+      if (!isOnline) {
+        console.log('Android going offline, loading cached entries...');
+        loadOfflineEntries();
+      } else {
+        console.log('Android online, will use server data but keeping offline cache ready');
+        // Keep offline entries loaded as fallback even when online
+        loadOfflineEntries();
+      }
     }
   }, [isOnline, type, searchQuery, limit, offset, androidOfflineEnabled]);
 
@@ -223,6 +227,9 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
       if (isOnline) {
         queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
         queryClient.invalidateQueries({ queryKey });
+      } else if (androidOfflineEnabled) {
+        // When offline, reload offline entries to show the new entry immediately
+        loadOfflineEntries();
       }
     },
     onError: (error) => {
