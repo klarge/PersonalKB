@@ -14,10 +14,11 @@ interface UseOfflineAwareEntriesOptions {
   searchQuery?: string;
   limit?: number;
   offset?: number;
+  enablePagination?: boolean;
 }
 
 export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = {}) {
-  const { type, searchQuery, limit, offset } = options;
+  const { type, searchQuery, limit = 30, offset = 0, enablePagination = false } = options;
   const { isOnline } = useOfflineSync();
   const [offlineEntries, setOfflineEntries] = useState<EntryData[]>([]);
   const [isLoadingOffline, setIsLoadingOffline] = useState(false);
@@ -29,10 +30,16 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
 
   // Build query key and enabled condition based on options
   const isSearchQuery = searchQuery && searchQuery.trim().length > 0;
+  
+  // For pagination, include limit and offset in query key
   const queryKey = isSearchQuery 
     ? ['/api/search', { q: searchQuery.trim() }]
     : type 
-    ? ['/api/entries', { type }]
+    ? enablePagination 
+      ? ['/api/entries', { type, limit, offset }]
+      : ['/api/entries', { type }]
+    : enablePagination
+    ? ['/api/entries', { limit, offset }]
     : ['/api/entries'];
 
   // Online query

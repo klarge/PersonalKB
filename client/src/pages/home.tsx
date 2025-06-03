@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import PaginatedEntryList from "@/components/paginated-entry-list";
 import type { EntryData } from "@/lib/offline-storage-mobile";
 
 export default function Home() {
@@ -35,13 +36,42 @@ export default function Home() {
   // Enable automatic caching of all entries when online
   useOfflineCache();
 
-  // Use offline-aware data fetching
-  const allEntriesQuery = useOfflineAwareEntries({});
-  const journalEntriesQuery = useOfflineAwareEntries({ type: "journal" });
-  const noteEntriesQuery = useOfflineAwareEntries({ type: "note" });
-  const peopleEntriesQuery = useOfflineAwareEntries({ type: "person" });
-  const placeEntriesQuery = useOfflineAwareEntries({ type: "place" });
-  const thingEntriesQuery = useOfflineAwareEntries({ type: "thing" });
+  // Check if running on Android for different loading strategies
+  const isAndroid = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
+  };
+
+  // Use offline-aware data fetching with pagination on web only
+  const allEntriesQuery = useOfflineAwareEntries({ 
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  const journalEntriesQuery = useOfflineAwareEntries({ 
+    type: "journal",
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  const noteEntriesQuery = useOfflineAwareEntries({ 
+    type: "note",
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  const peopleEntriesQuery = useOfflineAwareEntries({ 
+    type: "person",
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  const placeEntriesQuery = useOfflineAwareEntries({ 
+    type: "place",
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  const thingEntriesQuery = useOfflineAwareEntries({ 
+    type: "thing",
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
   const searchEntriesQuery = useOfflineAwareEntries({ 
     searchQuery: debouncedSearchQuery.trim().length > 0 ? debouncedSearchQuery : undefined 
   });

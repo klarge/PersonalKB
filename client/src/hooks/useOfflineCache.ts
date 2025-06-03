@@ -38,23 +38,24 @@ export function useOfflineCache() {
 
   // Cache entries whenever we get fresh data
   useEffect(() => {
-    if (isOnline && recentEntries && recentEntries.length > 0) {
-      cacheRecentEntries(recentEntries);
+    if (isOnline && entriesToCache && entriesToCache.length > 0) {
+      cacheEntries(entriesToCache);
     }
-  }, [isOnline, recentEntries]);
+  }, [isOnline, entriesToCache]);
 
-  const cacheRecentEntries = async (entries: EntryData[]) => {
+  const cacheEntries = async (entries: EntryData[]) => {
     try {
-      console.log(`Caching ${entries.length} recent entries for offline access...`);
+      const platform = isAndroid() ? 'Android' : 'web';
+      console.log(`Caching ${entries.length} entries for offline access on ${platform}...`);
       await offlineStorageMobile.cacheServerEntries(entries);
-      console.log('Recent entries cached successfully');
+      console.log(`${entries.length} entries cached successfully`);
     } catch (error) {
-      console.error('Error caching recent entries:', error);
+      console.error('Error caching entries:', error);
     }
   };
 
   return {
-    isCaching: !!recentEntries && isOnline,
-    cachedEntriesCount: recentEntries?.length || 0
+    isCaching: !!entriesToCache && isOnline,
+    cachedEntriesCount: entriesToCache?.length || 0
   };
 }
