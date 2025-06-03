@@ -85,9 +85,18 @@ export function useUnifiedSync() {
       for (const entry of unsyncedEntries) {
         try {
           console.log(`🔄 Syncing entry: ${entry.title} (${entry.isOfflineCreated ? 'create' : 'update'})`);
+          console.log(`🔄 Entry details:`, { id: entry.id, tempId: entry.tempId, needsSync: entry.needsSync });
           
           if (entry.isOfflineCreated) {
             // Create new entry on server
+            console.log(`🔄 Creating new entry on server:`, {
+              title: entry.title,
+              content: entry.content,
+              type: entry.type,
+              date: entry.date,
+              structuredData: entry.structuredData
+            });
+            
             const response = await fetch('/api/entries', {
               method: 'POST',
               headers: { 
@@ -104,12 +113,17 @@ export function useUnifiedSync() {
               })
             });
             
+            console.log(`🔄 Server response:`, response.status, response.statusText);
+            
             if (!response.ok) {
               const errorText = await response.text();
+              console.error(`🔄 Server error:`, errorText);
               throw new Error(`Failed to create entry: ${response.status} ${errorText}`);
             }
             
             const serverEntry = await response.json();
+            console.log(`🔄 Server entry created:`, serverEntry);
+            
             await unifiedStorage.markAsSynced(entry.tempId || entry.id.toString(), serverEntry.id);
             console.log(`✓ Created entry on server: ${entry.tempId} -> ${serverEntry.id}`);
             successCount++;

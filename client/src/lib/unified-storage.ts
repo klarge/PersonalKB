@@ -181,11 +181,22 @@ class UnifiedStorage {
       needsSync: true
     };
     
+    console.log(`📱 Creating offline entry:`, newEntry);
+    
     const entries = await this.getAllEntries();
+    console.log(`📱 Current entries count before adding: ${entries.length}`);
+    
     entries.unshift(newEntry);
     await this.saveAllEntries(entries);
     
+    console.log(`📱 Saved entries count after adding: ${entries.length}`);
     console.log(`📱 Created offline entry: ${tempId}`);
+    
+    // Verify the entry was saved
+    const verifyEntries = await this.getAllEntries();
+    const foundEntry = verifyEntries.find(e => e.id === tempId);
+    console.log(`📱 Verification - Entry found:`, !!foundEntry, foundEntry?.title);
+    
     return tempId;
   }
 

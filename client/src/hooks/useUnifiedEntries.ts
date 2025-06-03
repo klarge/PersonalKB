@@ -55,11 +55,13 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
       
       if (searchQuery && searchQuery.trim()) {
         entries = await unifiedStorage.searchEntries(searchQuery.trim());
+        console.log(`🔧 Search results: ${entries.length} entries`);
       } else {
         entries = await unifiedStorage.getEntriesByType(type);
+        console.log(`🔧 Type filter results: ${entries.length} entries for type: ${type}`);
       }
       
-      console.log(`🔧 Loaded ${entries.length} local entries`);
+      console.log(`🔧 Loaded ${entries.length} local entries:`, entries.map(e => ({ id: e.id, title: e.title, isOfflineCreated: e.isOfflineCreated })));
       setLocalEntries(entries);
     } catch (error) {
       console.error('🔧 Error loading local entries:', error);
@@ -174,6 +176,8 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
         
       } else if (androidOfflineEnabled) {
         // Android (online or offline): Create locally first
+        console.log('🔧 Creating offline entry with data:', entryData);
+        
         const tempId = await unifiedStorage.createOfflineEntry({
           title: entryData.title,
           content: entryData.content,
@@ -183,8 +187,11 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
           userId: 'current-user' // This should be the actual user ID
         });
         
-        // Refresh local view immediately
+        console.log('🔧 Created offline entry with tempId:', tempId);
+        
+        // Force refresh local view immediately
         await loadLocalEntries();
+        console.log('🔧 Refreshed local entries after creation');
         
         // If online, try to sync immediately
         if (isOnline) {

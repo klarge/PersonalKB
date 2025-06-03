@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useOfflineAwareEntries } from "@/hooks/useOfflineAwareEntries";
+import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
 
 interface QuickNoteDialogProps {
   trigger?: React.ReactNode;
@@ -15,7 +15,7 @@ export default function QuickNoteDialog({ trigger }: QuickNoteDialogProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const { toast } = useToast();
-  const { createEntry, isCreating, isOnline } = useOfflineAwareEntries({ type: 'note' });
+  const { createEntry, isCreating, isOnline } = useUnifiedEntries({ type: 'note' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
