@@ -7,38 +7,54 @@ import { useOfflineSync } from './useOfflineSync';
 export function useOfflineCache() {
   const { isOnline } = useOfflineSync();
 
-  // Fetch all entries when online
-  const { data: allEntries } = useQuery<EntryData[]>({
-    queryKey: ['/api/entries', 'all-for-cache'],
+  // Check if running on Android
+  const isAndroid = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
+  };
+
+  // Fetch entries for caching - all entries on Android, recent ones on web
+  const { data: entriesToCache } = useQuery<EntryData[]>({
+    queryKey: ['/api/entries', 'for-cache'],
     enabled: isOnline,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
-      // Fetch all entries with a high limit to get everything
-      const response = await fetch('/api/entries?limit=1000');
-      if (!response.ok) throw new Error('Failed to fetch entries');
-      return response.json();
+      if (isAndroid()) {
+        // On Android, cache ALL entries for full offline functionality
+        const response = await fetch('/api/entries?limit=10000'); // High limit to get all
+        if (!response.ok) throw new Error('Failed to fetch all entries');
+        return response.json();
+      } else {
+        // On web, only cache recent entries for performance
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const response = await fetch(`/api/entries?limit=100&since=${thirtyDaysAgo.toISOString()}`);
+        if (!response.ok) throw new Error('Failed to fetch recent entries');
+        return response.json();
+      }
     }
   });
 
   // Cache entries whenever we get fresh data
   useEffect(() => {
-    if (isOnline && allEntries && allEntries.length > 0) {
-      cacheAllEntries(allEntries);
+    if (isOnline && recentEntries && recentEntries.length > 0) {
+      cacheRecentEntries(recentEntries);
     }
-  }, [isOnline, allEntries]);
+  }, [isOnline, recentEntries]);
 
-  const cacheAllEntries = async (entries: EntryData[]) => {
+  const cacheRecentEntries = async (entries: EntryData[]) => {
     try {
-      console.log(`Caching ${entries.length} entries for offline access...`);
+      console.log(`Caching ${entries.length} recent entries for offline access...`);
       await offlineStorageMobile.cacheServerEntries(entries);
-      console.log('All entries cached successfully');
+      console.log('Recent entries cached successfully');
     } catch (error) {
-      console.error('Error caching all entries:', error);
+      console.error('Error caching recent entries:', error);
     }
   };
 
   return {
-    isCaching: !!allEntries && isOnline,
-    cachedEntriesCount: allEntries?.length || 0
+    isCaching: !!recentEntries && isOnline,
+    cachedEntriesCount: recentEntries?.length || 0
   };
 }

@@ -20,7 +20,17 @@ import type { EntryData } from "@/lib/offline-storage-mobile";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const { isOnline, pendingCount } = useOfflineSync();
+
+  // Debounce search query to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   // Enable automatic caching of all entries when online
   useOfflineCache();
@@ -33,7 +43,7 @@ export default function Home() {
   const placeEntriesQuery = useOfflineAwareEntries({ type: "place" });
   const thingEntriesQuery = useOfflineAwareEntries({ type: "thing" });
   const searchEntriesQuery = useOfflineAwareEntries({ 
-    searchQuery: searchQuery.trim().length > 0 ? searchQuery : undefined 
+    searchQuery: debouncedSearchQuery.trim().length > 0 ? debouncedSearchQuery : undefined 
   });
 
   const allEntries = allEntriesQuery.data;
