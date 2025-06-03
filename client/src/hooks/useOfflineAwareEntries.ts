@@ -27,9 +27,10 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
   const androidOfflineEnabled = isAndroid();
   console.log('Android offline enabled:', androidOfflineEnabled);
 
-  // Build query key based on options
-  const queryKey = searchQuery 
-    ? ['/api/search', searchQuery]
+  // Build query key and enabled condition based on options
+  const isSearchQuery = searchQuery && searchQuery.trim().length > 0;
+  const queryKey = isSearchQuery 
+    ? ['/api/search', { q: searchQuery.trim() }]
     : type 
     ? ['/api/entries', { type }]
     : ['/api/entries'];
@@ -37,7 +38,7 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
   // Online query
   const onlineQuery = useQuery<EntryData[]>({
     queryKey,
-    enabled: isOnline,
+    enabled: isOnline && (!isSearchQuery || searchQuery.trim().length > 2),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
