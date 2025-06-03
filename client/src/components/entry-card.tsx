@@ -46,37 +46,21 @@ function getConnectionCount(content: string) {
 }
 
 function cleanContentForPreview(content: string) {
-  // Remove image references from content preview
+  // Use the same image replacement logic as HashtagRenderer
   let cleaned = content;
   
-  // Split into lines and process each line
-  const lines = cleaned.split('\n');
-  const filteredLines = lines.filter(line => {
-    const trimmed = line.trim();
-    
-    // Skip empty lines
-    if (!trimmed) return false;
-    
-    // Skip lines that start with ![
-    if (trimmed.startsWith('![')) return false;
-    
-    // Skip lines that contain long hex strings (32+ characters)
-    if (/[a-f0-9]{32,}/.test(trimmed)) return false;
-    
-    // Skip lines that are mostly hex characters, dashes, and URLs
-    if (trimmed.length > 20 && /^[a-f0-9\-\.\/:\(\)\s]+$/.test(trimmed)) return false;
-    
-    return true;
-  });
-  
-  // Join filtered lines and clean up
-  cleaned = filteredLines.join(' ');
+  // Remove all image markdown patterns completely (same as HashtagRenderer does for preview)
+  const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  cleaned = cleaned.replace(imageRegex, '');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
   
-  // Clean up whitespace
-  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  // Clean up whitespace and formatting
+  cleaned = cleaned
+    .replace(/\n+/g, ' ') // Replace line breaks with spaces
+    .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+    .trim();
     
   return cleaned;
 }
