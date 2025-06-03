@@ -248,14 +248,14 @@ export default function Home() {
 }
 
 interface EntryListProps {
-  entries: EntryData[];
+  entries: StoredEntry[];
   isLoading: boolean;
   emptyMessage: string;
   type?: "journal" | "note" | "person" | "place" | "thing";
 }
 
 function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
-  const [allEntries, setAllEntries] = useState<EntryData[]>(entries);
+  const [allEntries, setAllEntries] = useState<StoredEntry[]>(entries);
   const [offset, setOffset] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(entries.length === 20);
@@ -339,7 +339,7 @@ function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
   );
 }
 
-function EntryCard({ entry }: { entry: EntryData }) {
+function EntryCard({ entry }: { entry: StoredEntry }) {
   // Clean content by removing image markdown
   const cleanContent = entry.content.replace(/!\[.*?\]\(.*?\)/g, '');
   const preview = cleanContent.slice(0, 200) + (cleanContent.length > 200 ? "..." : "");

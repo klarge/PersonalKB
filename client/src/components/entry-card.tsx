@@ -1,8 +1,8 @@
 import { Link2, BookOpen, Lightbulb } from "lucide-react";
-import type { Entry } from "@shared/schema";
+import type { StoredEntry } from "@/lib/unified-storage";
 
 interface EntryCardProps {
-  entry: Entry;
+  entry: StoredEntry;
   searchQuery?: string;
 }
 
