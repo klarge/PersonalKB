@@ -97,7 +97,10 @@ export default function EntryPage() {
         title: "Entry saved",
         description: "Your changes have been saved successfully.",
       });
+      // Invalidate all entry-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries/autocomplete"] });
       if (isToday) {
         queryClient.invalidateQueries({ queryKey: ["/api/entries/today"] });
       }
@@ -124,7 +127,10 @@ export default function EntryPage() {
         title: "Entry deleted",
         description: "Your entry has been deleted successfully.",
       });
+      // Invalidate all entry-related queries
       queryClient.invalidateQueries({ queryKey: ["/api/entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/entries/autocomplete"] });
       setLocation("/");
     },
     onError: () => {
