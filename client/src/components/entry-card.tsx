@@ -46,12 +46,15 @@ function getConnectionCount(content: string) {
 }
 
 function cleanContentForPreview(content: string) {
-  // Use the same image replacement logic as HashtagRenderer
+  // Test filter for specific string
   let cleaned = content;
   
-  // Remove all image markdown patterns completely (same as HashtagRenderer does for preview)
+  // Remove the exact test string
+  cleaned = cleaned.replace(/!\[289b7de4103b102f14dcd1080467c8c8\]\(https:\/\/5760bb7f-5705-44a5-88bf-834989a6fa8a-00-1jkje5e8fkuuw\.spock\.replit\.dev\/uploads\/289b7de4103b102f14dcd1080467c8c8\)/g, '[IMAGE REMOVED]');
+  
+  // Remove all image markdown patterns completely
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-  cleaned = cleaned.replace(imageRegex, '');
+  cleaned = cleaned.replace(imageRegex, '[IMAGE]');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
