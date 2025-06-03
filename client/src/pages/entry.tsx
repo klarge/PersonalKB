@@ -86,6 +86,37 @@ export default function EntryPage() {
     }
   }, [entry]);
 
+  // Android keyboard handling - scroll to focused input
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.contentEditable === 'true') {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300); // Delay to allow keyboard to show
+      }
+    };
+
+    const handleResize = () => {
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT' || activeElement.contentEditable === 'true')) {
+        setTimeout(() => {
+          activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isMobile]);
+
   // Mutation for updating entry
   const updateMutation = useMutation({
     mutationFn: async (data: { title: string; content: string; structuredData?: any }) => {
@@ -645,7 +676,7 @@ export default function EntryPage() {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-700 shadow-sm">
-          <div className="p-6">
+          <div className={`p-6 ${isMobile ? 'pb-96' : ''}`} ref={contentRef}>
             {/* Title Input */}
             <div className="mb-3">
               <AutoResizeTextarea

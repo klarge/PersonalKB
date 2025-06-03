@@ -285,14 +285,14 @@ class OfflineStorageMobile {
               }
             }
             
-            // Only add cached entry if no updates exist
+            // Always add cached entries if no updates exist
             if (!processedIds.has(entry.id)) {
               entries.push(entry);
               processedIds.add(entry.id);
               console.log('📱 Added cached entry:', entry.title);
             }
           } else if (key.startsWith(this.ENTRY_PREFIX)) {
-            // For offline entries, only add if it's not an update to an already processed entry
+            // For offline entries (new creations or updates)
             if (!entry.id || !processedIds.has(entry.id)) {
               entries.push(entry);
               if (entry.id) processedIds.add(entry.id);
