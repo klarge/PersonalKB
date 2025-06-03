@@ -49,8 +49,11 @@ function cleanContentForPreview(content: string) {
   // Remove image references from content preview
   let cleaned = content;
   
+  // Log the original content to debug
+  console.log('Original content:', content);
+  
   // Remove all markdown image syntax: ![anything](anything)
-  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
+  cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/gs, '');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
@@ -62,6 +65,7 @@ function cleanContentForPreview(content: string) {
     .replace(/^\s*[-*+]\s*/gm, '') // Remove list markers
     .trim();
     
+  console.log('Cleaned content:', cleaned);
   return cleaned;
 }
 
