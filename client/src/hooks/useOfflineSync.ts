@@ -54,7 +54,11 @@ export function useOfflineSync() {
           if (entry.action === 'create') {
             const response = await fetch('/api/entries', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
               body: JSON.stringify({
                 title: entry.title,
                 content: entry.content,
@@ -79,7 +83,11 @@ export function useOfflineSync() {
           } else if (entry.action === 'update' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'credentials': 'include'
+              },
+              credentials: 'include',
               body: JSON.stringify({
                 title: entry.title,
                 content: entry.content,
@@ -98,7 +106,8 @@ export function useOfflineSync() {
             
           } else if (entry.action === 'delete' && entry.id) {
             const response = await fetch(`/api/entries/${entry.id}`, {
-              method: 'DELETE'
+              method: 'DELETE',
+              credentials: 'include'
             });
             
             if (!response.ok) {
@@ -139,13 +148,16 @@ export function useOfflineSync() {
   const saveOfflineEntry = async (entryData: {
     title: string;
     content: string;
-    type: string;
+    type: 'journal' | 'note' | 'person' | 'place' | 'thing';
     date: string;
     structuredData?: any;
   }) => {
     try {
       const tempId = await offlineStorageMobile.saveOfflineEntry({
-        ...entryData,
+        title: entryData.title,
+        content: entryData.content,
+        type: entryData.type,
+        date: entryData.date,
         structuredData: entryData.structuredData || {},
         action: 'create'
       });

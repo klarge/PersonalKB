@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ export default function EntryPage() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const isToday = params?.id === "today";
   const entryId = isToday ? null : parseInt(params?.id || "0");
