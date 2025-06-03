@@ -304,7 +304,9 @@ function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
 }
 
 function EntryCard({ entry }: { entry: EntryData }) {
-  const preview = entry.content.slice(0, 200) + (entry.content.length > 200 ? "..." : "");
+  // Clean content by removing image markdown
+  const cleanContent = entry.content.replace(/!\[.*?\]\(.*?\)/g, '');
+  const preview = cleanContent.slice(0, 200) + (cleanContent.length > 200 ? "..." : "");
   
   // Extract hashtags
   const hashtags = entry.content.match(/#[\w]+/g) || [];
