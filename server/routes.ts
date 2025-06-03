@@ -167,6 +167,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Main search endpoint (for frontend compatibility)
+  app.get("/api/search", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { q, type } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ message: "Query parameter required" });
+      }
+
+      const entries = await storage.searchEntries(userId, q as string, type as any);
+      res.json(entries);
+    } catch (error: any) {
+      console.error("Error searching entries:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/entries/autocomplete", requireSimpleAuth, async (req, res) => {
     try {
       const userId = getUserId(req);
