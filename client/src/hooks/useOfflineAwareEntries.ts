@@ -218,8 +218,22 @@ export function useOfflineAwareEntries(options: UseOfflineAwareEntriesOptions = 
         // Reload offline entries immediately to show new entry
         await loadOfflineEntries();
         
-        // Return success indicator
-        return { tempId, success: true };
+        // Return success indicator with entry data
+        return { 
+          tempId, 
+          success: true,
+          entry: {
+            id: tempId,
+            title: entryData.title,
+            content: entryData.content,
+            type: entryData.type,
+            date: entryData.date,
+            structuredData: entryData.structuredData || {},
+            userId: 'offline-user',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        };
       }
     },
     onSuccess: () => {
