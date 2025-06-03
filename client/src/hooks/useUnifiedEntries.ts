@@ -313,6 +313,56 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
     }
   });
 
+  // Get single entry by ID or special identifier
+  const getEntry = async (idOrTypeDate: number | string, dateStr?: string): Promise<StoredEntry> => {
+    if (androidOfflineEnabled) {
+      // Android: Check local storage first
+      const allEntries = await unifiedStorage.getAllEntries();
+      
+      if (typeof idOrTypeDate === 'number') {
+        // Find by ID
+        const entry = allEntries.find(e => e.id === idOrTypeDate);
+        if (entry) return entry;
+      } else if (typeof idOrTypeDate === 'string' && dateStr) {
+        // Find by type and date (for "today" entries)
+        const entry = allEntries.find(e => 
+          e.type === idOrTypeDate && 
+          e.date.startsWith(dateStr)
+        );
+        if (entry) return entry;
+      }
+      
+      // If online, try to fetch from server
+      if (isOnline && typeof idOrTypeDate === 'number') {
+        try {
+          const response = await fetch(`/api/entries/${idOrTypeDate}`, {
+            credentials: 'include'
+          });
+          if (response.ok) {
+            const serverEntry = await response.json();
+            await unifiedStorage.cacheServerEntries([serverEntry]);
+            return serverEntry;
+          }
+        } catch (error) {
+          console.error('Failed to fetch entry from server:', error);
+        }
+      }
+      
+      throw new Error('Entry not found');
+    } else {
+      // Web: Fetch from server
+      if (typeof idOrTypeDate === 'number') {
+        const response = await fetch(`/api/entries/${idOrTypeDate}`, {
+          credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Entry not found');
+        return await response.json();
+      } else {
+        throw new Error('Invalid entry identifier for web platform');
+      }
+    }
+  };
+
   // Return appropriate data based on platform and online status
   if (!androidOfflineEnabled) {
     // Web: Use server data only
@@ -322,6 +372,7 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
       isLoading: serverQuery.isLoading,
       error: serverQuery.error,
       isOnline: isOnline,
+      getEntry,
       createEntry: createEntryMutation.mutate,
       isCreating: createEntryMutation.isPending,
       updateEntry: updateEntryMutation.mutate,
@@ -335,6 +386,7 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
       isLoading: isLoadingLocal,
       error: null,
       isOnline: isOnline,
+      getEntry,
       createEntry: createEntryMutation.mutate,
       isCreating: createEntryMutation.isPending,
       updateEntry: updateEntryMutation.mutate,

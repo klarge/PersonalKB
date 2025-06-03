@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,13 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Calendar, StickyNote, BookOpen, User, MapPin, Package, Trash2, Lightbulb, Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import WysiwygEditor from "@/components/wysiwyg-editor";
 import HashtagRenderer from "@/components/hashtag-renderer";
 import AutoResizeTextarea from "@/components/auto-resize-textarea";
-import type { Entry } from "@shared/schema";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
+import type { StoredEntry } from "@/lib/unified-storage";
 
 export default function EntryPage() {
   const [match, params] = useRoute("/entry/:id");
@@ -23,7 +22,6 @@ export default function EntryPage() {
   const [structuredData, setStructuredData] = useState<any>({});
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -32,24 +30,39 @@ export default function EntryPage() {
   const isToday = params?.id === "today";
   const entryId = isToday ? null : parseInt(params?.id || "0");
 
-  // Query for entry data
-  const { data: entry, isLoading, error } = useQuery<Entry & { tags?: any[] }>({
-    queryKey: isToday ? ["/api/entries/today"] : ["/api/entries", entryId],
-    queryFn: async () => {
-      const url = isToday ? "/api/entries/today" : `/api/entries/${entryId}`;
-      const res = await apiRequest("GET", url);
-      return res.json();
-    },
-    enabled: isToday || (!!entryId && !isNaN(entryId)),
-    retry: false,
-  });
+  // Use unified storage system for offline-first entry access
+  const { getEntry, createEntry, updateEntry } = useUnifiedEntries();
+  const [entry, setEntry] = useState<StoredEntry | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Query for backlinks - entries that reference this one
-  const { data: backlinks = [] } = useQuery<Entry[]>({
-    queryKey: ["/api/entries/backlinks", entry?.id],
-    queryFn: () => fetch(`/api/entries/backlinks/${entry?.id}`).then(res => res.json()),
-    enabled: !!entry?.id,
-  });
+  // Load entry data using unified storage
+  useEffect(() => {
+    async function loadEntry() {
+      if (isToday) {
+        // For today's entry, try to find existing or prepare for new
+        const today = new Date().toISOString().split('T')[0];
+        try {
+          const todayEntry = await getEntry('journal', today);
+          setEntry(todayEntry);
+        } catch (err) {
+          console.log("No today entry found, will create new");
+          setEntry(null);
+        }
+      } else if (entryId && !isNaN(entryId)) {
+        try {
+          const foundEntry = await getEntry(entryId);
+          setEntry(foundEntry);
+        } catch (err) {
+          setError(err as Error);
+          console.error("Entry not found:", err);
+        }
+      }
+      setIsLoading(false);
+    }
+
+    loadEntry();
+  }, [entryId, isToday, getEntry]);
 
   // Set edit mode based on entry status
   useEffect(() => {
