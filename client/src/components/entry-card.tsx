@@ -47,19 +47,28 @@ function getConnectionCount(content: string) {
 
 function cleanContentForPreview(content: string) {
   // Remove image markdown patterns from content preview
-  // More aggressive pattern to catch all variations
   let cleaned = content;
   
-  // Remove any line that contains an image pattern
+  // Remove markdown image syntax: ![alt](url)
   cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
   
-  // Remove lines that are just image URLs
+  // Remove image URLs (both https and relative paths)
   cleaned = cleaned.replace(/https:\/\/.*?\/uploads\/[a-f0-9]+/g, '');
   
-  // Clean up remaining whitespace
+  // Remove bare image filenames/hashes (like the one showing in Rav4 entry)
+  cleaned = cleaned.replace(/\b[a-f0-9]{32,}\b/g, '');
+  
+  // Remove patterns that look like image references with parentheses
+  cleaned = cleaned.replace(/\([a-f0-9]{30,}[^)]*\)/g, '');
+  
+  // Remove hashtag references to prevent clutter
+  cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
+  
+  // Clean up remaining whitespace and formatting
   cleaned = cleaned
     .replace(/\n+/g, ' ') // Replace line breaks with spaces
     .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+    .replace(/^\s*[-*+]\s*/gm, '') // Remove list markers
     .trim();
     
   return cleaned;
