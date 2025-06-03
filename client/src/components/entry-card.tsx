@@ -46,27 +46,39 @@ function getConnectionCount(content: string) {
 }
 
 function cleanContentForPreview(content: string) {
-  // Remove image markdown patterns from content preview
+  // Remove image and file references from content preview
   let cleaned = content;
   
   // Remove markdown image syntax: ![alt](url)
   cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
   
-  // Remove image URLs (both https and relative paths)
+  // Remove image URLs and upload paths
   cleaned = cleaned.replace(/https:\/\/.*?\/uploads\/[a-f0-9]+/g, '');
   
-  // Remove bare image filenames/hashes (like the one showing in Rav4 entry)
-  cleaned = cleaned.replace(/\b[a-f0-9]{32,}\b/g, '');
+  // Remove parenthetical content that contains long hex strings (image references)
+  cleaned = cleaned.replace(/\([a-f0-9]{20,}[^)]*\)/g, '');
   
-  // Remove patterns that look like image references with parentheses
-  cleaned = cleaned.replace(/\([a-f0-9]{30,}[^)]*\)/g, '');
+  // Remove bare hex strings that are likely image filenames
+  cleaned = cleaned.replace(/\b[a-f0-9]{20,}\b/g, '');
+  
+  // Remove lines that contain only hex strings and URLs
+  cleaned = cleaned.replace(/^[a-f0-9\-\.\/:\s]+$/gm, '');
   
   // Remove hashtag references to prevent clutter
   cleaned = cleaned.replace(/#\[\[[^\]]+\]\]/g, '');
   
   // Clean up remaining whitespace and formatting
   cleaned = cleaned
-    .replace(/\n+/g, ' ') // Replace line breaks with spaces
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      // Skip lines that are mostly hex characters or URLs
+      if (trimmed.length > 20 && /^[a-f0-9\-\.\/:\s]+$/.test(trimmed)) return false;
+      // Skip empty lines
+      if (!trimmed) return false;
+      return true;
+    })
+    .join(' ')
     .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
     .replace(/^\s*[-*+]\s*/gm, '') // Remove list markers
     .trim();
