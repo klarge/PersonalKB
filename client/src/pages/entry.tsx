@@ -645,7 +645,7 @@ export default function EntryPage() {
         <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-700 shadow-sm">
           <div className="p-6">
             {/* Title Input */}
-            <div className="mb-6">
+            <div className="mb-3">
               <AutoResizeTextarea
                 placeholder={getPlaceholderText(entry?.type)}
                 value={title}
