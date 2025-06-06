@@ -233,11 +233,6 @@ export default function EntryPage() {
   const getStructuredFields = () => {
     if (!entry?.type) return null;
 
-    // Debug logging
-    console.log('Entry type:', entry.type);
-    console.log('Structured data:', structuredData);
-    console.log('Entry structuredData:', entry.structuredData);
-
     const getFieldClassName = () => {
       return isMobile 
         ? "flex flex-col space-y-2 mb-4" 
