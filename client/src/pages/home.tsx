@@ -43,43 +43,43 @@ export default function Home() {
   // Direct queries for simpler, more reliable implementation
   const { data: allEntries = [], isLoading: isLoadingAll } = useUnifiedEntries({ 
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
   
   const { data: journalEntries = [], isLoading: isLoadingJournal } = useUnifiedEntries({ 
     type: "journal",
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
   
   const { data: noteEntries = [], isLoading: isLoadingNotes } = useUnifiedEntries({ 
     type: "note",
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
   
   const { data: peopleEntries = [], isLoading: isLoadingPeople } = useUnifiedEntries({ 
     type: "person",
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
   
   const { data: placeEntries = [], isLoading: isLoadingPlaces } = useUnifiedEntries({ 
     type: "place",
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
   
   const { data: thingEntries = [], isLoading: isLoadingThings } = useUnifiedEntries({ 
     type: "thing",
     searchQuery: debouncedSearchQuery,
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
+    enablePagination: !isAndroid() && !debouncedSearchQuery,
+    limit: debouncedSearchQuery ? undefined : (isAndroid() ? undefined : 30)
   });
 
   return (
@@ -185,6 +185,7 @@ export default function Home() {
                 entries={allEntries} 
                 isLoading={isLoadingAll} 
                 emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
 
@@ -194,6 +195,7 @@ export default function Home() {
                 isLoading={isLoadingJournal} 
                 emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
                 type="journal"
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
 
@@ -203,6 +205,7 @@ export default function Home() {
                 isLoading={isLoadingNotes} 
                 emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
                 type="note"
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
 
@@ -212,6 +215,7 @@ export default function Home() {
                 isLoading={isLoadingPeople} 
                 emptyMessage="No people entries yet. Add someone to your knowledge base!"
                 type="person"
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
 
@@ -221,6 +225,7 @@ export default function Home() {
                 isLoading={isLoadingPlaces} 
                 emptyMessage="No places recorded yet. Document important locations!"
                 type="place"
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
 
@@ -230,6 +235,7 @@ export default function Home() {
                 isLoading={isLoadingThings} 
                 emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
                 type="thing"
+                searchQuery={debouncedSearchQuery}
               />
             </TabsContent>
           </Tabs>
@@ -244,30 +250,38 @@ interface EntryListProps {
   isLoading: boolean;
   emptyMessage: string;
   type?: "journal" | "note" | "person" | "place" | "thing";
+  searchQuery?: string;
 }
 
-function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
+function EntryList({ entries, isLoading, emptyMessage, type, searchQuery }: EntryListProps) {
   const [allEntries, setAllEntries] = useState<StoredEntry[]>(entries);
-  const [offset, setOffset] = useState(20);
+  const [offset, setOffset] = useState(30);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(entries.length === 20);
+  const [hasMore, setHasMore] = useState(entries.length === 30);
+
+  const isAndroid = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
+  };
 
   const loadMore = async () => {
+    if (isAndroid() || searchQuery) return; // No pagination on Android or during search
+    
     setIsLoadingMore(true);
     try {
       const url = type 
-        ? `/api/entries?type=${type}&limit=20&offset=${offset}`
-        : `/api/entries?limit=20&offset=${offset}`;
+        ? `/api/entries?type=${type}&limit=30&offset=${offset}`
+        : `/api/entries?limit=30&offset=${offset}`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: 'include' });
       const newEntries = await response.json();
       
-      if (newEntries.length < 20) {
+      if (newEntries.length < 30) {
         setHasMore(false);
       }
       
       setAllEntries(prev => [...prev, ...newEntries]);
-      setOffset(prev => prev + 20);
+      setOffset(prev => prev + 30);
     } catch (error) {
       console.error("Failed to load more entries:", error);
     } finally {
@@ -278,9 +292,9 @@ function EntryList({ entries, isLoading, emptyMessage, type }: EntryListProps) {
   // Update entries when prop changes
   useEffect(() => {
     setAllEntries(entries);
-    setOffset(20);
-    setHasMore(entries.length === 20);
-  }, [entries]);
+    setOffset(30);
+    setHasMore(entries.length === 30 && !isAndroid() && !searchQuery);
+  }, [entries, searchQuery]);
 
   if (isLoading) {
     return (
