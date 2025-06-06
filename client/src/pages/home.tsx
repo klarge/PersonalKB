@@ -52,8 +52,8 @@ export default function Home() {
       if (response.ok) {
         const existingEntry = await response.json();
         if (existingEntry) {
-          // Entry exists, navigate to it
-          window.location.href = `/entry/${existingEntry.id}`;
+          // Entry exists, navigate to it in edit mode
+          window.location.href = `/entry/${existingEntry.id}?edit=true`;
           return;
         }
       }

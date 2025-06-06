@@ -79,8 +79,11 @@ export default function EntryPage() {
     loadEntry();
   }, [entryId, isToday]); // Removed getEntry from dependencies to prevent infinite loop
 
-  // Set edit mode based on entry status
+  // Set edit mode based on entry status and URL parameter
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editFromUrl = urlParams.get('edit') === 'true';
+    
     if (isToday) {
       // Today's journal - always start in edit mode
       setIsEditing(true);
@@ -94,9 +97,14 @@ export default function EntryPage() {
         setTitle(today);
       }
     } else if (entry) {
-      // Existing entry with content - start in view mode
-      // New entry without content - start in edit mode
-      setIsEditing(!entry.content || entry.content.trim() === "");
+      // Check URL parameter first, then fall back to content-based logic
+      if (editFromUrl) {
+        setIsEditing(true);
+      } else {
+        // Existing entry with content - start in view mode
+        // New entry without content - start in edit mode
+        setIsEditing(!entry.content || entry.content.trim() === "");
+      }
     } else if (entryId && !isLoading && error) {
       // New entry (ID exists but entry not found) - start in edit mode
       setIsEditing(true);
@@ -215,14 +223,44 @@ export default function EntryPage() {
     }
   };
 
-  // Handle delete (simplified for now)
+  // Handle delete
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+    if (!entry?.id) {
       toast({
-        title: "Feature not available",
-        description: "Delete functionality will be available soon.",
+        title: "Error",
+        description: "Cannot delete entry - entry not found.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+      try {
+        // Use the unified storage system for deletion
+        const response = await fetch(`/api/entries/${entry.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete entry');
+        }
+
+        toast({
+          title: "Entry deleted",
+          description: "Your entry has been deleted successfully.",
+        });
+
+        // Navigate back to home
+        setLocation("/");
+      } catch (error) {
+        console.error("Delete error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete entry. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
