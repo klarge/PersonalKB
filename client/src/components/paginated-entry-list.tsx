@@ -68,6 +68,14 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
       setCurrentOffset(0);
       setAllLoadedEntries([]);
       setHasLoadedInitial(false);
+      
+      // If search was just cleared, force a fresh query
+      if (!searchQuery || searchQuery.trim() === '') {
+        // Small delay to ensure query key has updated
+        setTimeout(() => {
+          webQuery.refetch();
+        }, 100);
+      }
     }
   }, [type, searchQuery]);
 

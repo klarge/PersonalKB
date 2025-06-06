@@ -46,12 +46,21 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
     
     if (wasSearching && !isNowSearching) {
       // Just cleared search - invalidate queries to force refresh
-      console.log('🔄 Search cleared, invalidating queries...');
-      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+      console.log('🔄 Search cleared, invalidating queries for type:', type);
+      
+      // Invalidate all relevant queries
+      if (type) {
+        queryClient.invalidateQueries({ queryKey: ['/api/entries', { type }] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+      }
+      
+      // Also remove any cached data to force fresh fetch
+      queryClient.removeQueries({ queryKey: ['/api/search'] });
     }
     
     setPreviousSearchQuery(searchQuery);
-  }, [searchQuery, previousSearchQuery, queryClient]);
+  }, [searchQuery, previousSearchQuery, queryClient, type]);
 
   // Server query (only when online)
   const serverQuery = useQuery<any[]>({
