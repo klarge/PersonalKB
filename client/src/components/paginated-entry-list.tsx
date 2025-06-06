@@ -33,7 +33,7 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
   // For web, load entries with pagination
   const webQuery = useUnifiedEntries({
     type,
-    searchQuery,
+    searchQuery: searchQuery && searchQuery.trim() ? searchQuery : undefined,
     limit: ENTRIES_PER_PAGE,
     offset: currentOffset,
     enablePagination: true
@@ -64,6 +64,7 @@ export default function PaginatedEntryList({ type, searchQuery, children }: Pagi
   // Reset when search query or type changes
   useEffect(() => {
     if (!isAndroid()) {
+      console.log('🔄 Resetting pagination due to search/type change:', { type, searchQuery });
       setCurrentOffset(0);
       setAllLoadedEntries([]);
       setHasLoadedInitial(false);

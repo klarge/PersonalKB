@@ -26,7 +26,9 @@ export default function Home() {
   // Debounce search query to improve performance
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
+      const trimmedQuery = searchQuery.trim();
+      console.log('🔍 Setting debounced search query:', trimmedQuery);
+      setDebouncedSearchQuery(trimmedQuery);
     }, 300);
 
     return () => clearTimeout(timer);
