@@ -13,7 +13,7 @@ import AutoResizeTextarea from "@/components/auto-resize-textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUnifiedEntries } from "@/hooks/useUnifiedEntries";
 import type { StoredEntry } from "@/lib/unified-storage";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function EntryPage() {
   const [match, params] = useRoute("/entry/:id");
@@ -26,6 +26,7 @@ export default function EntryPage() {
   const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const isToday = params?.id === "today";
   const entryId = isToday ? null : parseInt(params?.id || "0");
@@ -250,6 +251,10 @@ export default function EntryPage() {
           title: "Entry deleted",
           description: "Your entry has been deleted successfully.",
         });
+
+        // Invalidate all entry queries to force refresh
+        queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+        queryClient.removeQueries({ queryKey: ['/api/entries', entry.id] });
 
         // Navigate back to home
         setLocation("/");
