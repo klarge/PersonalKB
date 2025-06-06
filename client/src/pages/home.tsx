@@ -40,7 +40,47 @@ export default function Home() {
     return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
   };
 
-  // No direct queries needed - PaginatedEntryList handles everything
+  // Direct queries for simpler, more reliable implementation
+  const { data: allEntries = [], isLoading: isLoadingAll } = useUnifiedEntries({ 
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  
+  const { data: journalEntries = [], isLoading: isLoadingJournal } = useUnifiedEntries({ 
+    type: "journal",
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  
+  const { data: noteEntries = [], isLoading: isLoadingNotes } = useUnifiedEntries({ 
+    type: "note",
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  
+  const { data: peopleEntries = [], isLoading: isLoadingPeople } = useUnifiedEntries({ 
+    type: "person",
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  
+  const { data: placeEntries = [], isLoading: isLoadingPlaces } = useUnifiedEntries({ 
+    type: "place",
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
+  
+  const { data: thingEntries = [], isLoading: isLoadingThings } = useUnifiedEntries({ 
+    type: "thing",
+    searchQuery: debouncedSearchQuery,
+    enablePagination: !isAndroid(),
+    limit: isAndroid() ? undefined : 30
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,80 +181,56 @@ export default function Home() {
             </div>
 
             <TabsContent value="all" className="mt-6">
-              <PaginatedEntryList searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={allEntries} 
+                isLoading={isLoadingAll} 
+                emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
+              />
             </TabsContent>
 
             <TabsContent value="journal" className="mt-6">
-              <PaginatedEntryList type="journal" searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
-                    type="journal"
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={journalEntries} 
+                isLoading={isLoadingJournal} 
+                emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
+                type="journal"
+              />
             </TabsContent>
 
             <TabsContent value="notes" className="mt-6">
-              <PaginatedEntryList type="note" searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
-                    type="note"
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={noteEntries} 
+                isLoading={isLoadingNotes} 
+                emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
+                type="note"
+              />
             </TabsContent>
 
             <TabsContent value="people" className="mt-6">
-              <PaginatedEntryList type="person" searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage="No people entries yet. Add someone to your knowledge base!"
-                    type="person"
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={peopleEntries} 
+                isLoading={isLoadingPeople} 
+                emptyMessage="No people entries yet. Add someone to your knowledge base!"
+                type="person"
+              />
             </TabsContent>
 
             <TabsContent value="places" className="mt-6">
-              <PaginatedEntryList type="place" searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage="No places recorded yet. Document important locations!"
-                    type="place"
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={placeEntries} 
+                isLoading={isLoadingPlaces} 
+                emptyMessage="No places recorded yet. Document important locations!"
+                type="place"
+              />
             </TabsContent>
 
             <TabsContent value="things" className="mt-6">
-              <PaginatedEntryList type="thing" searchQuery={debouncedSearchQuery}>
-                {(entries, isLoading) => (
-                  <EntryList 
-                    entries={entries} 
-                    isLoading={isLoading} 
-                    emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
-                    type="thing"
-                  />
-                )}
-              </PaginatedEntryList>
+              <EntryList 
+                entries={thingEntries} 
+                isLoading={isLoadingThings} 
+                emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
+                type="thing"
+              />
             </TabsContent>
           </Tabs>
         </div>

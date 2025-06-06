@@ -27,36 +27,40 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
   const androidOfflineEnabled = isAndroid();
   console.log('🔧 Android offline enabled:', androidOfflineEnabled);
 
-  // Build query key for server requests
-  const isSearchQuery = searchQuery && searchQuery.trim().length > 0;
-  const queryKey = isSearchQuery 
-    ? ['/api/search', { q: searchQuery.trim() }]
-    : type 
-    ? enablePagination 
+  // Build query key for server requests - simplified
+  const hasSearchQuery = searchQuery && searchQuery.trim().length > 2;
+  
+  let queryKey: any[];
+  if (hasSearchQuery) {
+    queryKey = ['/api/search', { q: searchQuery.trim() }];
+  } else if (type) {
+    queryKey = enablePagination 
       ? ['/api/entries', { type, limit, offset }]
-      : ['/api/entries', { type }]
-    : enablePagination
-    ? ['/api/entries', { limit, offset }]
-    : ['/api/entries'];
+      : ['/api/entries', { type }];
+  } else {
+    queryKey = enablePagination
+      ? ['/api/entries', { limit, offset }]
+      : ['/api/entries'];
+  }
 
   // Track when search query changes from something to nothing
   useEffect(() => {
-    const wasSearching = previousSearchQuery && previousSearchQuery.trim().length > 0;
-    const isNowSearching = searchQuery && searchQuery.trim().length > 0;
+    const wasSearching = previousSearchQuery && previousSearchQuery.trim().length > 2;
+    const isNowSearching = searchQuery && searchQuery.trim().length > 2;
     
     if (wasSearching && !isNowSearching) {
       // Just cleared search - invalidate queries to force refresh
       console.log('🔄 Search cleared, invalidating queries for type:', type);
       
-      // Invalidate all relevant queries
+      // Remove all search-related cache first
+      queryClient.removeQueries({ queryKey: ['/api/search'] });
+      
+      // Then invalidate all relevant entry queries to force fresh fetch
       if (type) {
         queryClient.invalidateQueries({ queryKey: ['/api/entries', { type }] });
       } else {
         queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
       }
-      
-      // Also remove any cached data to force fresh fetch
-      queryClient.removeQueries({ queryKey: ['/api/search'] });
     }
     
     setPreviousSearchQuery(searchQuery);
@@ -65,7 +69,7 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
   // Server query (only when online)
   const serverQuery = useQuery<any[]>({
     queryKey,
-    enabled: isOnline && (isSearchQuery ? searchQuery.trim().length > 2 : true),
+    enabled: isOnline && (hasSearchQuery ? true : true),
     staleTime: 10 * 60 * 1000, // 10 minutes - longer cache time
     gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
   });
