@@ -21,6 +21,7 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
   const { isOnline } = useOfflineSync();
   const [localEntries, setLocalEntries] = useState<StoredEntry[]>([]);
   const [isLoadingLocal, setIsLoadingLocal] = useState(false);
+  const [previousSearchQuery, setPreviousSearchQuery] = useState<string | undefined>();
   const queryClient = useQueryClient();
   
   const androidOfflineEnabled = isAndroid();
@@ -37,6 +38,20 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
     : enablePagination
     ? ['/api/entries', { limit, offset }]
     : ['/api/entries'];
+
+  // Track when search query changes from something to nothing
+  useEffect(() => {
+    const wasSearching = previousSearchQuery && previousSearchQuery.trim().length > 0;
+    const isNowSearching = searchQuery && searchQuery.trim().length > 0;
+    
+    if (wasSearching && !isNowSearching) {
+      // Just cleared search - invalidate queries to force refresh
+      console.log('🔄 Search cleared, invalidating queries...');
+      queryClient.invalidateQueries({ queryKey: ['/api/entries'] });
+    }
+    
+    setPreviousSearchQuery(searchQuery);
+  }, [searchQuery, previousSearchQuery, queryClient]);
 
   // Server query (only when online)
   const serverQuery = useQuery<any[]>({
