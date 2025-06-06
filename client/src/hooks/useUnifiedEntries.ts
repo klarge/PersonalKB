@@ -41,7 +41,7 @@ export function useUnifiedEntries(options: UseUnifiedEntriesOptions = {}) {
   // Server query (only when online)
   const serverQuery = useQuery<any[]>({
     queryKey,
-    enabled: isOnline && (!isSearchQuery || searchQuery.trim().length > 2),
+    enabled: isOnline && (isSearchQuery ? searchQuery.trim().length > 2 : true),
     staleTime: 10 * 60 * 1000, // 10 minutes - longer cache time
     gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
   });
