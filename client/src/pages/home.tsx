@@ -40,6 +40,33 @@ export default function Home() {
     return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
   };
 
+  const handleTodaysJournal = async () => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    try {
+      // Check if today's journal entry already exists
+      const response = await fetch(`/api/entries/date/${today}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const existingEntry = await response.json();
+        if (existingEntry) {
+          // Entry exists, navigate to it
+          window.location.href = `/entry/${existingEntry.id}`;
+          return;
+        }
+      }
+      
+      // No existing entry, create new one
+      window.location.href = `/entry/today`;
+    } catch (error) {
+      console.error('Error checking for today\'s journal:', error);
+      // Fallback to creating new entry
+      window.location.href = `/entry/today`;
+    }
+  };
+
   // Direct queries for simpler, more reliable implementation
   const { data: allEntries = [], isLoading: isLoadingAll } = useUnifiedEntries({ 
     searchQuery: debouncedSearchQuery,
@@ -94,12 +121,13 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Link href="/entry/today">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4">
-                  <Calendar className="h-4 w-4" />
-                  <span className="ml-2 hidden md:inline">Today's Journal</span>
-                </Button>
-              </Link>
+              <Button 
+                onClick={handleTodaysJournal}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4"
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="ml-2 hidden md:inline">Today's Journal</span>
+              </Button>
               
               <QuickNoteDialog
                 trigger={

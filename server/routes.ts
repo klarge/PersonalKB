@@ -109,6 +109,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get entry by date
+  app.get("/api/entries/date/:date", requireSimpleAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const dateStr = req.params.date;
+      
+      // Parse date string (YYYY-MM-DD format)
+      const date = new Date(dateStr + 'T00:00:00.000Z');
+      if (isNaN(date.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+      
+      const entry = await storage.getEntryByDate(userId, date);
+      if (!entry) {
+        return res.status(404).json({ message: "No entry found for this date" });
+      }
+      
+      res.json(entry);
+    } catch (error: any) {
+      console.error("Error fetching entry by date:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get backlinks for an entry
   app.get("/api/entries/backlinks/:id", requireSimpleAuth, async (req, res) => {
     try {
