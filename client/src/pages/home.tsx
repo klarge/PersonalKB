@@ -38,57 +38,7 @@ export default function Home() {
     return /Android/i.test(navigator.userAgent) || window.location.href.includes('capacitor://');
   };
 
-  // Use unified data fetching with pagination on web only
-  const allEntriesQuery = useUnifiedEntries({ 
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const journalEntriesQuery = useUnifiedEntries({ 
-    type: "journal",
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const noteEntriesQuery = useUnifiedEntries({ 
-    type: "note",
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const peopleEntriesQuery = useUnifiedEntries({ 
-    type: "person",
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const placeEntriesQuery = useUnifiedEntries({ 
-    type: "place",
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const thingEntriesQuery = useUnifiedEntries({ 
-    type: "thing",
-    enablePagination: !isAndroid(),
-    limit: isAndroid() ? undefined : 30
-  });
-  const searchEntriesQuery = useUnifiedEntries({ 
-    searchQuery: debouncedSearchQuery.trim().length > 0 ? debouncedSearchQuery : undefined 
-  });
-
-  const allEntries = allEntriesQuery.data;
-  const journalEntries = journalEntriesQuery.data;
-  const noteEntries = noteEntriesQuery.data;
-  const peopleEntries = peopleEntriesQuery.data;
-  const placeEntries = placeEntriesQuery.data;
-  const thingEntries = thingEntriesQuery.data;
-  const searchResults = searchEntriesQuery.data;
-
-  const isLoadingAll = allEntriesQuery.isLoading;
-  const isLoadingJournal = journalEntriesQuery.isLoading;
-  const isLoadingNotes = noteEntriesQuery.isLoading;
-  const isLoadingPeople = peopleEntriesQuery.isLoading;
-  const isLoadingPlaces = placeEntriesQuery.isLoading;
-  const isLoadingThings = thingEntriesQuery.isLoading;
-  const isSearching = searchEntriesQuery.isLoading;
-
-  const displayEntries = searchQuery.trim() ? searchResults : allEntries;
+  // No direct queries needed - PaginatedEntryList handles everything
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -189,56 +139,80 @@ export default function Home() {
             </div>
 
             <TabsContent value="all" className="mt-6">
-              <EntryList 
-                entries={displayEntries} 
-                isLoading={isLoadingAll || isSearching} 
-                emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
-              />
+              <PaginatedEntryList searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage={searchQuery ? "No entries found matching your search." : "No entries yet. Create your first journal entry or quick note!"}
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
 
             <TabsContent value="journal" className="mt-6">
-              <EntryList 
-                entries={journalEntries} 
-                isLoading={isLoadingJournal} 
-                emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
-                type="journal"
-              />
+              <PaginatedEntryList type="journal" searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage="No journal entries yet. Click 'Today's Journal' to get started!"
+                    type="journal"
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
 
             <TabsContent value="notes" className="mt-6">
-              <EntryList 
-                entries={noteEntries} 
-                isLoading={isLoadingNotes} 
-                emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
-                type="note"
-              />
+              <PaginatedEntryList type="note" searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage="No quick notes yet. Click 'Quick Note' to capture your first thought!"
+                    type="note"
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
 
             <TabsContent value="people" className="mt-6">
-              <EntryList 
-                entries={peopleEntries} 
-                isLoading={isLoadingPeople} 
-                emptyMessage="No people entries yet. Add someone to your knowledge base!"
-                type="person"
-              />
+              <PaginatedEntryList type="person" searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage="No people entries yet. Add someone to your knowledge base!"
+                    type="person"
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
 
             <TabsContent value="places" className="mt-6">
-              <EntryList 
-                entries={placeEntries} 
-                isLoading={isLoadingPlaces} 
-                emptyMessage="No places recorded yet. Document important locations!"
-                type="place"
-              />
+              <PaginatedEntryList type="place" searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage="No places recorded yet. Document important locations!"
+                    type="place"
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
 
             <TabsContent value="things" className="mt-6">
-              <EntryList 
-                entries={thingEntries} 
-                isLoading={isLoadingThings} 
-                emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
-                type="thing"
-              />
+              <PaginatedEntryList type="thing" searchQuery={debouncedSearchQuery}>
+                {(entries, isLoading) => (
+                  <EntryList 
+                    entries={entries} 
+                    isLoading={isLoading} 
+                    emptyMessage="No things catalogued yet. Keep track of important objects and concepts!"
+                    type="thing"
+                  />
+                )}
+              </PaginatedEntryList>
             </TabsContent>
           </Tabs>
         </div>
